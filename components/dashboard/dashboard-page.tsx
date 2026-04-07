@@ -10,15 +10,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Plus, TrendingUp, Clock, Target, Loader2, ChevronLeft, ChevronRight, Filter, RotateCcw, MessageSquare } from 'lucide-react';
 import InterviewCard from './interview-card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { SkillRadarChart } from './skill-radar-chart';
+import { StreakTracker } from './streak-tracker';
+import { WeeklyDigestToggle } from './weekly-digest-toggle';
 import { ScoreTrendChart } from './score-trend-chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OnboardingWizard } from './onboarding-wizard';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SampleReplay } from './sample-replay';
+
+const DASHBOARD_TOOLTIPS = {
+  total: "The total number of AI-powered practice sessions you've completed.",
+  score: "Your average score calculated from AI feedback across all sessions.",
+  time: "Total focus time spent in active interviews.",
+};
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [type, setType] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
+  const { data: statsData, isLoading: isStatsLoading } = useInterviewStats();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const isCompleted = localStorage.getItem('onboarding_completed');
+    // Show only if not completed and user has no interviews yet
+    if (!isCompleted && statsData && statsData.totalInterviews === 0) {
+      setShowOnboarding(true);
+    }
+  }, [statsData]);
+
+  const handleCloseOnboarding = () => {
+    localStorage.setItem('onboarding_completed', 'true');
+    setShowOnboarding(false);
+  };
 
   const { 
     data: interviewsResponse, 
@@ -34,7 +61,6 @@ export default function DashboardPage() {
   
   const interviews = interviewsResponse?.data;
   const pagination = interviewsResponse?.pagination;
-  const { data: statsData, isLoading: isStatsLoading } = useInterviewStats();
   
   const isInitialLoading = (isInterviewsLoading && !interviewsResponse) || isStatsLoading;
   const isError = isInterviewsError;
@@ -82,90 +108,139 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="px-4 py-8 sm:px-6 lg:px-8">
+      <main id="main-content" className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-10"
+            className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6"
           >
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2">Welcome back, {user?.name}!</h1>
-            <p className="text-muted-foreground text-lg">
-              Continue practicing and improving your interview skills
-            </p>
-          </motion.div>
-
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            {isInitialLoading ? (
-              Array(3).fill(0).map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <Skeleton className="h-4 w-24" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-8 w-16" />
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              statsList.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-md transition-shadow border-primary/5">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                        <div className="p-2 bg-primary/5 rounded-lg">
-                          <Icon className="h-4 w-4 text-primary" />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-3xl font-bold flex items-baseline gap-1">
-                          {stat.value}
-                          {stat.suffix && <span className="text-sm font-normal text-muted-foreground">{stat.suffix}</span>}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Score Trend Chart - Only if 2+ interviews */}
-          {!isInitialLoading && statsData && statsData.totalInterviews >= 2 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="mb-10"
-            >
-              <ScoreTrendChart />
-            </motion.div>
-          )}
-
-          {/* Start New Interview CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-12"
-          >
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold mb-2">Welcome back, {user?.name}!</h1>
+              <p className="text-muted-foreground text-lg">
+                Continue practicing and improving your interview skills
+              </p>
+            </div>
             <Link href="/interview-setup">
-              <Button size="lg" className="gap-2 w-full sm:w-auto h-14 px-8 text-lg shadow-lg hover:shadow-primary/20">
+              <Button size="lg" className="gap-2 h-12 px-6 shadow-lg hover:shadow-primary/20">
                 <Plus className="w-5 h-5" />
-                Start New Interview Practice
+                Start New Practice
               </Button>
             </Link>
           </motion.div>
+
+          {/* Stats & Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            {/* Left Column: Stats & Streak */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Stats Row */}
+              <TooltipProvider>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {isInitialLoading ? (
+                    Array(3).fill(0).map((_, i) => (
+                      <Card key={i} className="overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <Skeleton className="h-4 w-24" />
+                        </CardHeader>
+                        <CardContent>
+                          <Skeleton className="h-8 w-16" />
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    statsList.map((stat, index) => {
+                      const Icon = stat.icon;
+                      const tooltipText = index === 0 ? DASHBOARD_TOOLTIPS.total : index === 1 ? DASHBOARD_TOOLTIPS.score : DASHBOARD_TOOLTIPS.time;
+                      
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Card className="hover:shadow-md transition-shadow border-primary/5 cursor-help h-full">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                  <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                                  <div className="p-2 bg-primary/5 rounded-lg">
+                                    <Icon className="h-4 w-4 text-primary" />
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="text-3xl font-bold flex items-baseline gap-1">
+                                    {stat.value}
+                                    {stat.suffix && <span className="text-sm font-normal text-muted-foreground">{stat.suffix}</span>}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{tooltipText}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </motion.div>
+                      );
+                    })
+                  )}
+                </div>
+              </TooltipProvider>
+
+              {/* Streak Tracker */}
+              {!isInitialLoading && statsData && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <StreakTracker streak={statsData.streak} percentile={statsData.percentile} />
+                </motion.div>
+              )}
+
+              {/* Score Trend Chart */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <ScoreTrendChart />
+              </motion.div>
+            </div>
+
+            {/* Right Column: Radar & Digest */}
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="h-fit"
+              >
+                <SkillRadarChart data={statsData?.radarData || { communication: 0, technical: 0, confidence: 0 }} />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <WeeklyDigestToggle initialValue={true} />
+              </motion.div>
+              
+              {!isInitialLoading && statsData && statsData.totalInterviews === 0 && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-base text-primary">Get Started</CardTitle>
+                    <CardDescription>
+                      Complete your first interview to unlock skill breakdown and streak tracking.
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              )}
+            </div>
+          </div>
 
           {/* Interview History */}
           <div className="space-y-6">
@@ -279,12 +354,23 @@ export default function DashboardPage() {
                         Clear All Filters
                       </Button>
                     ) : (
-                      <Link href="/interview-setup">
-                        <Button className="gap-2">
-                          <Plus className="w-4 h-4" />
-                          Create Interview
-                        </Button>
-                      </Link>
+                      <div className="space-y-12 w-full max-w-4xl mx-auto">
+                        <Link href="/interview-setup">
+                          <Button className="gap-2 h-12 px-8 font-bold text-lg">
+                            <Plus className="w-5 h-5" />
+                            Create Your First Interview
+                          </Button>
+                        </Link>
+                        
+                        <div className="space-y-6">
+                           <div className="flex items-center gap-3 justify-center text-muted-foreground mb-4">
+                              <div className="h-[1px] w-12 bg-border" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">See how it works</span>
+                              <div className="h-[1px] w-12 bg-border" />
+                           </div>
+                           <SampleReplay />
+                        </div>
+                      </div>
                     )}
                   </motion.div>
                 </div>
@@ -336,7 +422,12 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
+      
+      <OnboardingWizard 
+        isOpen={showOnboarding} 
+        onClose={handleCloseOnboarding} 
+      />
     </div>
   );
 }

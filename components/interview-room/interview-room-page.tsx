@@ -69,7 +69,7 @@ function InterviewRoomContent() {
 
   const ws = useRef<WebSocket | null>(null);
   const threadId = useRef<string>(id || "");
-  const { startRecording, stopRecording } = useVoice();
+  const { startRecording, stopRecording, volume } = useVoice();
   const isSpeakingRef = useRef(false);
   const isInterviewActiveRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -119,8 +119,16 @@ function InterviewRoomContent() {
     setIsCheckingPermissions(true);
     setPermissionsError(null);
     try {
+      const audioConstraints = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+        sampleRate: 16000,
+      };
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: audioConstraints,
         video: isVideoEnabled,
       });
       stream.getTracks().forEach((track) => track.stop());
@@ -502,7 +510,7 @@ function InterviewRoomContent() {
         <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center text-destructive mb-6">
           <AlertCircle size={32} />
         </div>
-        <h2 className="text-2xl font-bold mb-2">Interview Session Not Found</h2>
+        <h1 className="text-2xl font-bold mb-2">Interview Session Not Found</h1>
         <p className="text-muted-foreground mb-8 max-w-md">
           We couldn&apos;t find the interview session you&apos;re looking for.
         </p>
@@ -515,7 +523,8 @@ function InterviewRoomContent() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <motion.div
+      <motion.main
+        id="main-content"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="px-4 py-6 sm:px-6 lg:px-8"
@@ -556,6 +565,7 @@ function InterviewRoomContent() {
                     isThinking={aiState === "thinking"}
                     isListening={aiState === "listening"}
                     isSpeaking={aiState === "speaking"}
+                    volume={volume}
                   />
                   <CameraFeed
                     isMuted={isMuted}
@@ -596,7 +606,7 @@ function InterviewRoomContent() {
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
+      </motion.main>
 
       {/* Pause Overlay */}
       <AnimatePresence>

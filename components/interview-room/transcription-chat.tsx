@@ -55,6 +55,8 @@ export default function TranscriptionChat({
         <CardContent
           ref={scrollRef}
           className="flex-1 overflow-y-auto space-y-4 pt-4 pr-4 scroll-smooth"
+          aria-live="polite"
+          aria-atomic="false"
         >
           {messages.length === 0 && !partialTranscript ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">

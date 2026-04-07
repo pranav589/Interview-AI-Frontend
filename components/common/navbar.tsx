@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Settings, Sun, Moon, Menu, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { LogOut, User, Settings, Sun, Moon, Menu, LayoutDashboard, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -81,6 +81,12 @@ export function Navbar() {
 
             {isLoggedIn ? (
               <>
+                <Link href="/interview-setup" className="hidden sm:block">
+                  <Button size="sm" className="gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="font-bold tracking-tight">Quick Start</span>
+                  </Button>
+                </Link>
                 <div className="hidden md:flex items-center gap-4">
                   <Link href="/dashboard">
                     <Button variant="ghost" size="sm" className="font-medium text-muted-foreground hover:text-foreground">
@@ -89,7 +95,7 @@ export function Navbar() {
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 border border-primary/10">
+                      <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 border border-primary/10" aria-label="User account menu">
                         <User className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -116,7 +122,7 @@ export function Navbar() {
                 <div className="md:hidden">
                   <Sheet>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="w-9 h-9">
+                      <Button variant="ghost" size="icon" className="w-9 h-9" aria-label="Open mobile navigation menu">
                         <Menu className="h-5 w-5" />
                       </Button>
                     </SheetTrigger>

@@ -8,12 +8,14 @@ interface AIAvatarProps {
   isThinking: boolean;
   isListening: boolean;
   isSpeaking: boolean;
+  volume?: number;
 }
 
 export default function AIAvatar({
   isThinking,
   isListening,
   isSpeaking,
+  volume = 0,
 }: AIAvatarProps) {
   return (
     <motion.div
@@ -22,7 +24,10 @@ export default function AIAvatar({
       transition={{ duration: 0.5 }}
       className="h-full"
     >
-      <Card className="h-full overflow-hidden relative bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center">
+      <Card 
+        className="h-full overflow-hidden relative bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center"
+        aria-label={`AI Interviewer visual representation - currently ${isThinking ? 'thinking' : isSpeaking ? 'speaking' : isListening ? 'listening' : 'ready'}`}
+      >
         <motion.div
           animate={{
             scale: isSpeaking ? [1, 1.05, 1] : 1,
@@ -95,12 +100,14 @@ export default function AIAvatar({
                 animate={{
                   height: isSpeaking
                     ? [20, 50, 20]
-                    : [10, 30, 10],
+                    : isListening
+                    ? [10, 10 + (volume * 0.5) + (index * 2), 10]
+                    : [10, 10, 10],
                 }}
                 transition={{
-                  duration: 0.5,
+                  duration: isSpeaking ? 0.5 : 0.1,
                   repeat: Infinity,
-                  delay: index * 0.1,
+                  delay: index * 0.05,
                 }}
                 className="w-1 rounded-full bg-primary"
               />

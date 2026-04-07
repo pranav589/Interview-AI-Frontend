@@ -83,4 +83,11 @@ export interface InterviewStats {
   totalInterviews: number;
   avgScore: number;
   totalDuration: number;
+  streak: number;
+  percentile: number;
+  radarData: {
+    communication: number;
+    technical: number;
+    confidence: number;
+  };
 }

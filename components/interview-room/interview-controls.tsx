@@ -43,6 +43,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onToggleMute}
         className="gap-2"
+        aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
       >
         {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
         {isMuted ? "Unmute" : "Mute"}
@@ -53,6 +54,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onToggleVideo}
         className="gap-2"
+        aria-label={isVideoEnabled ? "Disable camera" : "Enable camera"}
       >
         {isVideoEnabled ? (
           <Video className="w-4 h-4" />
@@ -67,6 +69,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onTogglePause}
         className="gap-2"
+        aria-label={isPaused ? "Resume interview" : "Pause interview"}
       >
         {isPaused ? (
           <Play className="w-4 h-4" />
@@ -81,6 +84,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onEndInterview}
         className="gap-2"
+        aria-label="End interview"
       >
         <Square className="w-4 h-4 fill-current" />
         End Interview
