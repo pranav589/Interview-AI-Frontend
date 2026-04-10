@@ -96,6 +96,7 @@ function InterviewRoomContent() {
   const [feedback, setFeedback] = useState("");
   const [showStopModal, setShowStopModal] = useState(false);
   const [showTimeUpModal, setShowTimeUpModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
   const [permissionsError, setPermissionsError] = useState<string | null>(null);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
@@ -428,7 +429,7 @@ function InterviewRoomContent() {
             ws.current?.close();
             ws.current = null;
             setAiState("idle");
-            handleGetFeedbackAndRedirect();
+            setShowCompleteModal(true);
           }
         } else if (data.type === "coding_question") {
           setIsCodingMode(true);
@@ -722,7 +723,7 @@ function InterviewRoomContent() {
                           isVideoEnabled={isVideoEnabled}
                         />
                       </div>
-                      <div className="h-[400px] flex-shrink-0">
+                      <div className="h-[500px] flex-shrink-0 mt-[8rem]">
                         <TranscriptionChat
                           messages={messages}
                           partialTranscript={partialTranscript}
@@ -771,7 +772,7 @@ function InterviewRoomContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm flex items-center justify-center"
+            className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -804,15 +805,23 @@ function InterviewRoomContent() {
         )}
       </AnimatePresence>
 
-      {showStopModal && (
+      {(showStopModal ||
+        showTimeUpModal ||
+        showCompleteModal ||
+        showDisconnectModal) && (
         <InterviewModals
           showStopModal={showStopModal}
           showTimeUpModal={showTimeUpModal}
+          showCompleteModal={showCompleteModal}
           showDisconnectModal={showDisconnectModal}
           onCloseStop={() => setShowStopModal(false)}
           onConfirmStop={confirmStop}
           onCloseTimeUp={() => {
             setShowTimeUpModal(false);
+            handleGetFeedbackAndRedirect();
+          }}
+          onCloseComplete={() => {
+            setShowCompleteModal(false);
             handleGetFeedbackAndRedirect();
           }}
           onCloseDisconnect={() => {
