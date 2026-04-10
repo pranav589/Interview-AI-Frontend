@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import { Interview, InterviewDetail, InterviewStats } from "@/lib/types";
 export type { Interview, InterviewDetail, InterviewStats };
 
@@ -27,26 +28,26 @@ export const useInterviewDetails = (id: string) => {
 };
 
 export const useInterviewStats = () => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["interview-stats"],
+    queryKey: ["interview-stats", user?.id],
     queryFn: async () => {
       const response = await api.get<{ data: InterviewStats }>(
         "interview/stats",
       );
       return response.data;
     },
+    enabled: !!user,
   });
 };
 
 export const useCreateInterview = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const router = useRouter();
 
   return useMutation({
     mutationFn: async (data: any) => {
-      // Use variables as they come from the frontend form, but they should now match backend expectations if possible
-      // However, the caller might still be passing the old 'type', 'difficulty', etc.
-      // I'll update the caller in follow-up steps, but for now I'll just pass 'data' directly.
       const response = await api.post<{
         message: string;
         interviewId: string;
@@ -56,16 +57,19 @@ export const useCreateInterview = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["interviews"] });
+      queryClient.invalidateQueries({ queryKey: ["interview-stats", user?.id] });
     },
   });
 };
 
 export const useScoreHistory = () => {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["score-history"],
+    queryKey: ["score-history", user?.id],
     queryFn: async () => {
       const response = await api.get<{ data: Array<{ date: string; score: number; type: string }> }>("interview/score-history");
       return response.data;
     },
+    enabled: !!user,
   });
 };

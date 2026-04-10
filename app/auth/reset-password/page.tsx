@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Navbar } from '@/components/common/navbar';
 import { motion } from 'framer-motion';
-import { Lock, Eye, EyeOff, CheckCircle, Loader2 } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import NextLink from 'next/link';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import { MESSAGES } from '@/lib/constants';
 
@@ -178,8 +179,10 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <Suspense fallback={
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+          <div className="w-full max-w-md space-y-4">
+            <Skeleton className="h-[400px] w-full rounded-xl" />
+          </div>
         </div>
       }>
         <ResetPasswordContent />

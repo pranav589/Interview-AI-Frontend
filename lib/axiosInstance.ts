@@ -31,6 +31,10 @@ axiosInstance.interceptors.response.use(
       _retry?: boolean;
     };
 
+    if (error.response?.data && (error.response.data as any).message) {
+      error.message = (error.response.data as any).message || error.message;
+    }
+
     if (
       !originalRequest ||
       error.response?.status !== 401 ||
@@ -47,10 +51,11 @@ axiosInstance.interceptors.response.use(
       "auth/forgot-password",
       "auth/reset-password",
     ];
-    if (excludedAuthRoutes.some((route) => originalRequest.url?.includes(route))) {
+    if (
+      excludedAuthRoutes.some((route) => originalRequest.url?.includes(route))
+    ) {
       return Promise.reject(error);
     }
-
 
     if (isRefreshing) {
       return new Promise(function (resolve, reject) {
@@ -73,7 +78,10 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth/")) {
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/auth/")
+      ) {
         window.location.href = "/auth/signin";
       }
       return Promise.reject(refreshError);

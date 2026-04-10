@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LoadingButton } from "../common/loading-button";
 import { VolumeMeter } from "./volume-meter";
 import { useState, useEffect, useRef } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InterviewSetupViewProps {
   interviewData: any;
@@ -140,11 +141,17 @@ export default function InterviewSetupView({
 
           <div className="space-y-6 mb-8 text-left max-w-md mx-auto">
             {isCheckingPermissions ? (
-              <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-xl space-y-4 bg-muted/50">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm font-medium animate-pulse">
-                  Waiting for browser permission...
-                </p>
+              <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-xl space-y-6 bg-muted/30 shadow-inner">
+                <div className="flex flex-col items-center gap-4 w-full">
+                  <Skeleton className="w-16 h-16 rounded-full" />
+                  <div className="space-y-2 w-full flex flex-col items-center">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-64" />
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest animate-pulse">
+                  Initializing hardware check...
+                </div>
               </div>
             ) : !hasPermissions ? (
               <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-xl space-y-4 bg-muted/50">

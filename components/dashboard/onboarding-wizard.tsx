@@ -22,10 +22,11 @@ import {
   Sparkles,
   PlayCircle
 } from "lucide-react";
-import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useUploadResume, useCompleteOnboarding } from "@/hooks/use-user";
+import { INTERVIEW_TYPES, MESSAGES } from "@/lib/constants";
 
 interface OnboardingWizardProps {
   isOpen: boolean;
@@ -35,16 +36,25 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
   const [step, setStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
-  const [resumeUploaded, setResumeUploaded] = useState(false);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
   const { refreshUser, user } = useAuth();
+  const [resumeUploaded, setResumeUploaded] = useState(!!user?.resume);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const router = useRouter();
+
+  const uploadResume = useUploadResume();
+  const completeOnboarding = useCompleteOnboarding();
+
+  useEffect(() => {
+    if (user?.resume) {
+      setResumeUploaded(true);
+    }
+  }, [user?.resume]);
 
   const handleNext = () => setStep((s) => s + 1);
   const handleBack = () => setStep((s) => s - 1);
 
-  const handleTypeSelect = (type: string) => {
-    setSelectedType(type.toLowerCase().replace(' ', '-'));
+  const handleTypeSelect = (id: string) => {
+    setSelectedType(id);
     handleNext();
   };
 
@@ -53,28 +63,31 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
     if (!file) return;
 
     if (file.type !== "application/pdf") {
-      return toast.error("Please upload a PDF file.");
+      return toast.error(MESSAGES.RESUME.PDF_ONLY);
     }
 
     setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append("resume", file);
-      await api.post("user/resume", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      await refreshUser();
+      await uploadResume.mutateAsync(formData);
       setResumeUploaded(true);
-      toast.success("Resume uploaded and analyzed!");
       setTimeout(handleNext, 1000);
     } catch (err) {
-      toast.error("Failed to upload resume.");
+      // Error handled in hook toast
     } finally {
       setIsUploading(false);
     }
   };
 
-  const startFirstInterview = () => {
+  const startFirstInterview = async () => {
+    try {
+      if (!user?.onboardingCompleted) {
+        await completeOnboarding.mutateAsync();
+      }
+    } catch (err) {
+      console.error(MESSAGES.ONBOARDING.COMPLETE_FAILED, err);
+    }
     onClose();
     const query = selectedType ? `?type=${selectedType}` : '';
     router.push(`/interview-setup${query}`);
@@ -149,7 +162,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                   <Upload className="w-8 h-8 text-primary" />
                 </div>
                 <p className="font-bold text-lg">Click or drop PDF</p>
-                <p className="text-xs text-muted-foreground">Max 2MB • PDF format only</p>
+                <p className="text-xs text-muted-foreground">Max 5MB • PDF format only</p>
               </div>
             )}
           </div>
@@ -167,27 +180,23 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
       icon: <Target className="w-12 h-12 text-primary" />,
       content: (
         <div className="grid grid-cols-1 gap-4 py-6">
-           {[
-             { title: 'Technical', desc: 'Coding, algorithms, and logic', icon: '💻' },
-             { title: 'Behavioral', desc: 'Situational & soft-skill questions', icon: '🤝' },
-             { title: 'System Design', desc: 'Scaling & architecture', icon: '🏗️' }
-           ].map((item, i) => (
-             <motion.div 
-               key={i}
-               whileHover={{ x: 5, backgroundColor: 'rgba(var(--primary-rgb), 0.05)' }}
-               className="p-4 border rounded-xl flex items-center gap-4 cursor-pointer transition-colors group"
-               onClick={() => handleTypeSelect(item.title)}
-             >
-               <div className="text-2xl w-12 h-12 flex items-center justify-center bg-muted rounded-full group-hover:bg-primary/10 transition-colors">
-                  {item.icon}
-               </div>
-               <div>
-                 <p className="font-bold">{item.title}</p>
-                 <p className="text-xs text-muted-foreground">{item.desc}</p>
-               </div>
-               <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-             </motion.div>
-           ))}
+            {INTERVIEW_TYPES.map((type, i) => (
+              <motion.div 
+                key={type.id}
+                whileHover={{ x: 5, backgroundColor: 'rgba(var(--primary-rgb), 0.05)' }}
+                className="p-4 border rounded-xl flex items-center gap-4 cursor-pointer transition-colors group"
+                onClick={() => handleTypeSelect(type.id)}
+              >
+                <div className="text-2xl w-12 h-12 flex items-center justify-center bg-muted rounded-full group-hover:bg-primary/10 transition-colors">
+                   {type.id === 'technical' ? '💻' : type.id === 'behavioral' ? '🤝' : '🏗️'}
+                </div>
+                <div>
+                  <p className="font-bold">{type.label}</p>
+                  <p className="text-xs text-muted-foreground">{type.description}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </motion.div>
+            ))}
         </div>
       )
     },

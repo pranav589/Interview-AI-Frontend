@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   Square,
+  Code2,
 } from "lucide-react";
 
 interface InterviewControlsProps {
@@ -20,6 +21,9 @@ interface InterviewControlsProps {
   onToggleVideo: () => void;
   onTogglePause: () => void;
   onEndInterview: () => void;
+  isCodingMode: boolean;
+  onToggleCodingMode: () => void;
+  isCodingEnabled?: boolean;
 }
 
 export default function InterviewControls({
@@ -30,6 +34,9 @@ export default function InterviewControls({
   onToggleVideo,
   onTogglePause,
   onEndInterview,
+  isCodingMode,
+  onToggleCodingMode,
+  isCodingEnabled = true,
 }: InterviewControlsProps) {
   return (
     <motion.div
@@ -78,6 +85,19 @@ export default function InterviewControls({
         )}
         {isPaused ? "Resume" : "Pause"}
       </Button>
+
+      {isCodingEnabled && (
+        <Button
+          variant={isCodingMode ? "default" : "outline"}
+          size="sm"
+          onClick={onToggleCodingMode}
+          className="gap-2"
+          aria-label={isCodingMode ? "Hide code editor" : "Show code editor"}
+        >
+          <Code2 className="w-4 h-4" />
+          {isCodingMode ? "Hide Editor" : "Show Editor"}
+        </Button>
+      )}
 
       <Button
         variant="destructive"

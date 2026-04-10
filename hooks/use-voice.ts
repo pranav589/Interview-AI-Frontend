@@ -80,7 +80,7 @@ export const useVoice = () => {
         type: "audio",
         mimeType: "audio/wav",
         recorderType: StereoAudioRecorder,
-        timeSlice: 500,
+        timeSlice: 250,
         desiredSampRate: 16000,
         numberOfAudioChannels: 1,
         bufferSize: 4096,
@@ -91,7 +91,7 @@ export const useVoice = () => {
           const now = Date.now();
           const timeSinceLastVoice = now - lastVoiceTimeRef.current;
           
-          if (timeSinceLastVoice > 800) { // 500ms chunk duration + 300ms lead-out
+          if (timeSinceLastVoice > 550) { // 250ms chunk duration + 300ms lead-out
             return;
           }
 

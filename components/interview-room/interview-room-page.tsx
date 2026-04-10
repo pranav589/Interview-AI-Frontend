@@ -7,15 +7,18 @@ import { Navbar } from "@/components/common/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Loader2, FileText, Pause, Play } from "lucide-react";
-import CameraFeed from "./camera-feed";
-import AIAvatar from "./ai-avatar";
-import TranscriptionChat, { ChatMessage } from "./transcription-chat";
+import { AlertCircle, FileText, Pause, Play, Code2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ChatMessage } from "./transcription-chat";
 import { useVoice } from "@/hooks/use-voice";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth-context";
+import { MESSAGES } from "@/lib/constants";
 import { api } from "@/lib/api";
 import { useInterviewDetails } from "@/hooks/use-interviews";
+import { useFeatureFlags } from "@/lib/feature-flags-context";
 
 // Sub-components
 import InterviewHeader from "./interview-header";
@@ -23,12 +26,43 @@ import InterviewSetupView from "./interview-setup-view";
 import InterviewControls from "./interview-controls";
 import InterviewModals from "./interview-modals";
 
+const CodingEditor = dynamic(() => import("./coding-editor"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[500px] w-full rounded-2xl" />,
+});
+
+const AIAvatar = dynamic(() => import("./ai-avatar"), {
+  ssr: false,
+  loading: () => <Skeleton className="rounded-2xl h-full" />,
+});
+
+const CameraFeed = dynamic(() => import("./camera-feed"), {
+  ssr: false,
+  loading: () => <Skeleton className="rounded-2xl h-full" />,
+});
+
+const TranscriptionChat = dynamic(() => import("./transcription-chat"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[400px] w-full rounded-2xl" />,
+});
+
 export default function InterviewRoomPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[400px]">
+              <Skeleton className="rounded-2xl h-full" />
+              <Skeleton className="rounded-2xl h-full" />
+            </div>
+            <Skeleton className="h-[400px] w-full rounded-2xl" />
+          </div>
         </div>
       }
     >
@@ -41,6 +75,7 @@ function InterviewRoomContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
+  const { isFeatureEnabled } = useFeatureFlags();
 
   const {
     data: interviewData,
@@ -67,19 +102,28 @@ function InterviewRoomContent() {
   const [hasPermissions, setHasPermissions] = useState(false);
   const [isStartingInterview, setIsStartingInterview] = useState(false);
 
+  // Coding Mode States
+  const [isCodingMode, setIsCodingMode] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState("javascript");
+  const [code, setCode] = useState("");
+
   const ws = useRef<WebSocket | null>(null);
   const threadId = useRef<string>(id || "");
   const { startRecording, stopRecording, volume } = useVoice();
   const isSpeakingRef = useRef(false);
   const isInterviewActiveRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const speechQueueRef = useRef<string[]>([]);
+  const isProcessingQueueRef = useRef(false);
 
   useEffect(() => {
     if (id) threadId.current = id;
   }, [id]);
 
   // Determine if this is a resume scenario
-  const isResuming = interviewData?.status === "paused" || interviewData?.status === "in-progress";
+  const isResuming =
+    interviewData?.status === "paused" ||
+    interviewData?.status === "in-progress";
 
   // Timer effect
   useEffect(() => {
@@ -138,146 +182,155 @@ function InterviewRoomContent() {
       setHasPermissions(false);
       setPermissionsError(
         err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "Camera and microphone access denied. Please enable them in your browser settings."
-          : "Could not access camera/microphone. Please ensure they are connected.",
+          ? MESSAGES.INTERVIEW_ROOM.PERMISSION_DENIED
+          : MESSAGES.INTERVIEW_ROOM.PERMISSION_ERROR,
       );
     } finally {
       setIsCheckingPermissions(false);
     }
   };
 
+  const processSpeechQueue = async () => {
+    if (!isFeatureEnabled("tts_enabled")) {
+      speechQueueRef.current = [];
+      setAiState("listening");
+      return;
+    }
+
+    if (isProcessingQueueRef.current || speechQueueRef.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueueRef.current = true;
+
+    while (speechQueueRef.current.length > 0) {
+      const text = speechQueueRef.current.shift();
+      if (!text) continue;
+
+      await new Promise<void>((resolve) => {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+        const ttsUrl = `${baseUrl}/tts?text=${encodeURIComponent(text)}`;
+        const audio = new Audio(ttsUrl);
+        currentAudioRef.current = audio;
+
+        audio.onplay = () => {
+          isSpeakingRef.current = true;
+          setAiState("speaking");
+        };
+
+        audio.onended = () => {
+          isSpeakingRef.current = false;
+          currentAudioRef.current = null;
+          resolve();
+        };
+
+        audio.onerror = (e) => {
+          console.error("TTS Audio Error:", e);
+          isSpeakingRef.current = false;
+          currentAudioRef.current = null;
+          resolve();
+        };
+
+        audio.play().catch((err) => {
+          if (err.name !== "AbortError") {
+            console.error("Audio Playback Failed:", err);
+          }
+          isSpeakingRef.current = false;
+          resolve();
+        });
+      });
+    }
+
+    isProcessingQueueRef.current = false;
+    setAiState("listening");
+  };
+
   const speakText = (text: string) => {
-    return new Promise<void>((resolve) => {
-      if (typeof window === "undefined" || !window.speechSynthesis) {
-        console.warn("Speech synthesis not supported");
-        return resolve();
-      }
-
-      // Stop any current speaking
-      window.speechSynthesis.cancel();
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.currentTime = 0;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      const voices = window.speechSynthesis.getVoices();
-
-      // Try to find the best sounding neural voices
-      const preferred =
-        voices.find(
-          (v) =>
-            v.lang.startsWith("en") &&
-            (v.name.includes("Google") ||
-              v.name.includes("Neural") ||
-              v.name.includes("Aria"))
-        ) ||
-        voices.find(
-          (v) => v.lang.startsWith("en") && v.name.includes("Female")
-        ) ||
-        voices.find((v) => v.lang.startsWith("en-US")) ||
-        voices[0];
-
-      if (preferred) utterance.voice = preferred;
-      
-      // Fine-tune rate and pitch for a more natural feel
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-
-      utterance.onstart = () => {
-        isSpeakingRef.current = true;
-        setAiState("speaking");
-      };
-      
-      utterance.onend = () => {
-        isSpeakingRef.current = false;
-        setAiState("listening");
-        resolve();
-      };
-      
-      utterance.onerror = (e) => {
-        if (e.error !== "interrupted" && e.error !== "canceled") {
-          console.error("SpeechSynthesis Error:", e);
-        }
-        isSpeakingRef.current = false;
-        setAiState("listening");
-        resolve();
-      };
-
-      window.speechSynthesis.speak(utterance);
-    });
+    speechQueueRef.current.push(text);
+    processSpeechQueue();
+    return Promise.resolve();
   };
 
   const queryClient = useQueryClient();
   const feedbackMutation = useMutation({
-    mutationFn: async ({ id, actualDuration }: { id: string; actualDuration: number }) =>
+    mutationFn: async ({
+      id,
+      actualDuration,
+    }: {
+      id: string;
+      actualDuration: number;
+    }) =>
       await api.post<{ feedback: string }>("interview/feedback", {
         threadId: id,
         actualDuration,
       }),
-    onSuccess: (data: any, variables: { id: string; actualDuration: number }) => {
+    onSuccess: (
+      data: any,
+      variables: { id: string; actualDuration: number },
+    ) => {
       setFeedback(data.feedback.feedbackSummary || "No summary provided.");
       if (variables) {
-        queryClient.invalidateQueries({ queryKey: ["interview", variables.id] });
+        queryClient.invalidateQueries({
+          queryKey: ["interview", variables.id],
+        });
         queryClient.invalidateQueries({ queryKey: ["interviews"] });
         queryClient.invalidateQueries({ queryKey: ["interview-stats"] });
       }
     },
   });
 
-  // ---------- Pause / Resume Handler ----------
   const handleTogglePause = () => {
     if (isPaused) {
-      // RESUME
       setIsPaused(false);
-
-      // Tell backend to resume
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({ type: "resume" }));
       }
-
-      // Resume audio recording
       startRecording(ws.current);
-
       setAiState("listening");
-      setMessages(prev => [...prev, {
-        id: `sys-${Date.now()}`,
-        speaker: "system",
-        text: "Interview resumed. Continue when ready.",
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `sys-${Date.now()}`,
+          speaker: "system",
+          text: MESSAGES.INTERVIEW_ROOM.RESUMED,
+        },
+      ]);
     } else {
-      // PAUSE
       setIsPaused(true);
-
-      // Stop TTS immediately
-      window.speechSynthesis?.cancel();
-
-      // Stop audio recording
-      stopRecording();
-
-      // Tell backend to pause (with current elapsed time)
-      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        ws.current.send(JSON.stringify({
-          type: "pause",
-          elapsedSeconds: interviewTime,
-        }));
+      speechQueueRef.current = [];
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
       }
-
+      stopRecording();
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(
+          JSON.stringify({
+            type: "pause",
+            elapsedSeconds: interviewTime,
+          }),
+        );
+      }
       setAiState("idle");
-      setMessages(prev => [...prev, {
-        id: `sys-${Date.now()}`,
-        speaker: "system",
-        text: "Interview paused. Take your time.",
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `sys-${Date.now()}`,
+          speaker: "system",
+          text: MESSAGES.INTERVIEW_ROOM.PAUSED,
+        },
+      ]);
     }
   };
 
   const handleStartInterview = async () => {
-    if (!id || !interviewData) return toast.error("Interview data missing");
+    if (!id || !interviewData)
+      return toast.error(MESSAGES.INTERVIEW.DATA_MISSING);
     if (permissionsError) return alert(permissionsError);
     setIsStartingInterview(true);
 
-    const resuming = interviewData.status === "paused" || interviewData.status === "in-progress";
+    const resuming =
+      interviewData.status === "paused" ||
+      interviewData.status === "in-progress";
 
     try {
       setAiState("thinking");
@@ -285,11 +338,12 @@ function InterviewRoomContent() {
         {
           id: "init-1",
           speaker: "system",
-          text: resuming ? "Reconnecting to your interview session..." : "Obtaining secure access ticket...",
+          text: resuming
+            ? MESSAGES.INTERVIEW_ROOM.RECONNECTING
+            : MESSAGES.INTERVIEW_ROOM.GETTING_TICKET,
         },
       ]);
-      
-      // 1. Get a one-time ticket for WS authentication
+
       const ticketData = await api.post<{ ticket: string }>("auth/ws-ticket");
       const ticket = ticketData.ticket;
 
@@ -298,22 +352,19 @@ function InterviewRoomContent() {
         {
           id: `init-${Date.now()}`,
           speaker: "system",
-          text: "Ticket obtained. Connecting to interview server...",
+          text: MESSAGES.INTERVIEW_ROOM.TICKET_OBTAINED,
         },
       ]);
 
-      // 2. Connect with ticket as query param for cross-origin auth support
       const wsUrl = new URL(process.env.NEXT_PUBLIC_WS_URL!);
       wsUrl.searchParams.set("ticket", ticket);
-      
+
       const socket = new WebSocket(wsUrl.toString());
       ws.current = socket;
 
       socket.onopen = () => {
         if (resuming) {
-          // Send resume instead of start
           socket.send(JSON.stringify({ type: "resume", threadId: id }));
-          // Initialize timer from saved elapsed time
           setInterviewTime(interviewData.elapsedSeconds || 0);
         } else {
           setMessages((prev) => [
@@ -321,7 +372,7 @@ function InterviewRoomContent() {
             {
               id: `init-${Date.now()}`,
               speaker: "system",
-              text: "Connected. Initializing interviewer...",
+              text: MESSAGES.INTERVIEW_ROOM.CONNECTED,
             },
           ]);
           socket.send(
@@ -330,7 +381,8 @@ function InterviewRoomContent() {
               threadId: id,
               resume: (interviewData as any).resume || "",
               numberOfQuestions: interviewData.numberOfQuestions ?? 5,
-              interviewType: (interviewData as any).interviewType ?? "technical",
+              interviewType:
+                (interviewData as any).interviewType ?? "technical",
               difficultyLevel:
                 (interviewData as any).difficultyLevel ?? "intermediate",
               jobTitle: (interviewData as any).jobTitle || "",
@@ -350,26 +402,24 @@ function InterviewRoomContent() {
       socket.onmessage = async (e) => {
         const data = JSON.parse(e.data);
         if (data.type === "text") {
+          setIsCodingMode(false);
           setAiState("thinking");
           setMessages((prev) => [
             ...prev,
             { id: `ai-${Date.now()}`, speaker: "ai", text: data.content },
           ]);
           await speakText(data.content);
-          
+
           if (data.isFinished) {
-            // Graceful end: give a brief moment after TTS completes
             setMessages((prev) => [
               ...prev,
               {
                 id: `sys-${Date.now()}`,
                 speaker: "system",
-                text: "Interview complete. Generating your feedback...",
+                text: MESSAGES.INTERVIEW_ROOM.COMPLETE,
               },
             ]);
-            // Small delay so user can read the message
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            // End interview and get feedback
+            await new Promise((resolve) => setTimeout(resolve, 1500));
             setIsInterviewActive(false);
             isInterviewActiveRef.current = false;
             stopRecording();
@@ -380,6 +430,21 @@ function InterviewRoomContent() {
             setAiState("idle");
             handleGetFeedbackAndRedirect();
           }
+        } else if (data.type === "coding_question") {
+          setIsCodingMode(true);
+          setCurrentLanguage(data.language || "javascript");
+          setCode(data.initialCode || "");
+          setAiState("thinking");
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-code-${Date.now()}`,
+              speaker: "ai",
+              text: data.questionText,
+            },
+          ]);
+          await speakText(data.questionText);
         } else if (data.type === "user_text") {
           setAiState("thinking");
           setPartialTranscript("");
@@ -390,13 +455,10 @@ function InterviewRoomContent() {
         } else if (data.type === "partial_text") {
           setPartialTranscript(data.content);
         } else if (data.type === "paused") {
-          // Backend confirmed pause
           toast.info("Interview paused");
         } else if (data.type === "resumed") {
-          // Backend confirmed resume — transcriber is ready
           toast.success("Interview resumed");
         } else if (data.type === "history") {
-          // Load existing conversation from paused session
           const historicalMessages: ChatMessage[] = data.messages
             .filter((m: any) => m.text && m.text !== "Start the interview.")
             .map((m: any, i: number) => ({
@@ -405,13 +467,13 @@ function InterviewRoomContent() {
               text: m.text,
             }));
 
-          setMessages(prev => [
+          setMessages((prev) => [
             ...prev,
             ...historicalMessages,
             {
               id: `sys-${Date.now()}`,
               speaker: "system",
-              text: "Previous conversation restored. Ready to continue.",
+              text: MESSAGES.INTERVIEW_ROOM.PREVIOUS_RESTORED,
             },
           ]);
         } else if (data.type === "error") {
@@ -430,7 +492,11 @@ function InterviewRoomContent() {
         if (isInterviewActiveRef.current) {
           setIsInterviewActive(false);
           isInterviewActiveRef.current = false;
-          window.speechSynthesis?.cancel();
+          speechQueueRef.current = [];
+          if (currentAudioRef.current) {
+            currentAudioRef.current.pause();
+            currentAudioRef.current = null;
+          }
           stopRecording();
           setShowDisconnectModal(true);
         }
@@ -441,7 +507,7 @@ function InterviewRoomContent() {
           {
             id: `err-${Date.now()}`,
             speaker: "system",
-            text: "Connection failed. Please check if the backend is running on port 3001.",
+            text: MESSAGES.INTERVIEW_ROOM.CONNECTION_FAILED,
           },
         ]);
         setAiState("idle");
@@ -455,7 +521,11 @@ function InterviewRoomContent() {
 
   const confirmStop = async () => {
     setShowStopModal(false);
-    window.speechSynthesis?.cancel();
+    speechQueueRef.current = [];
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+    }
     stopRecording();
     setIsVideoEnabled(false);
     setIsMuted(true);
@@ -464,34 +534,59 @@ function InterviewRoomContent() {
     isInterviewActiveRef.current = false;
     ws.current?.close();
     ws.current = null;
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-    }
     setAiState("idle");
 
     handleGetFeedbackAndRedirect();
   };
 
   const handleGetFeedbackAndRedirect = () => {
-    toast.promise(feedbackMutation.mutateAsync({ id: id || threadId.current, actualDuration: Math.ceil(interviewTime / 60) }), {
-      loading: "Analyzing your interview session...",
-      success: () => {
-        router.push(`/interview/${id}`);
-        return "Interview completed! Your feedback is ready.";
+    toast.promise(
+      feedbackMutation.mutateAsync({
+        id: id || threadId.current,
+        actualDuration: Math.ceil(interviewTime / 60),
+      }),
+      {
+        loading: "Analyzing your interview session...",
+        success: () => {
+          router.push(`/interview/${id}`);
+          return "Interview completed! Your feedback is ready.";
+        },
+        error: () => {
+          router.push("/dashboard");
+          return "Session ended, but feedback generation failed.";
+        },
       },
-      error: () => {
-        router.push("/dashboard");
-        return "Session ended, but feedback generation failed.";
-      },
-    });
+    );
+  };
+
+  const handleSubmitCode = async (submittedCode: string, language: string) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(
+        JSON.stringify({
+          type: "code_submission",
+          content: submittedCode,
+          language: language,
+        }),
+      );
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `submit-${Date.now()}`,
+          speaker: "user",
+          text: `🚀 [Submitted ${language} Code]`,
+        },
+      ]);
+
+      toast.success("Code submitted for evaluation");
+    }
   };
 
   useEffect(() => {
     return () => {
       stopRecording();
       ws.current?.close();
-      window.speechSynthesis?.cancel();
+      speechQueueRef.current = [];
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
       }
@@ -500,8 +595,19 @@ function InterviewRoomContent() {
 
   if (isDetailsLoading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[400px]">
+            <Skeleton className="rounded-2xl h-full" />
+            <Skeleton className="rounded-2xl h-full" />
+          </div>
+          <Skeleton className="h-[400px] w-full rounded-2xl" />
+        </div>
       </div>
     );
   if (isDetailsError || (!id && !isDetailsLoading))
@@ -536,7 +642,12 @@ function InterviewRoomContent() {
             id={id}
             interviewData={interviewData}
             interviewTime={interviewTime}
-            onGetFeedback={() => feedbackMutation.mutate({ id: threadId.current, actualDuration: Math.ceil(interviewTime / 60) })}
+            onGetFeedback={() =>
+              feedbackMutation.mutate({
+                id: threadId.current,
+                actualDuration: Math.ceil(interviewTime / 60),
+              })
+            }
           />
 
           <AnimatePresence mode="wait">
@@ -560,35 +671,80 @@ function InterviewRoomContent() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8 h-full flex flex-col gap-4"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[400px]">
-                  <AIAvatar
-                    isThinking={aiState === "thinking"}
-                    isListening={aiState === "listening"}
-                    isSpeaking={aiState === "speaking"}
-                    volume={volume}
-                  />
-                  <CameraFeed
-                    isMuted={isMuted}
-                    isVideoEnabled={false}
-                  />
-                </div>
-                <div className="min-h-[350px] ">
-                  <TranscriptionChat
-                    messages={messages}
-                    partialTranscript={partialTranscript}
-                    isTranscribing={
-                      aiState === "thinking" && !partialTranscript
-                    }
-                  />
+                <div className="flex flex-col gap-6">
+                  {isCodingMode ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:h-[750px]">
+                      <div className="lg:col-span-8 flex flex-col gap-4 order-2 lg:order-1 h-full">
+                        <div className="flex-1 min-h-0">
+                          <CodingEditor
+                            initialLanguage={currentLanguage}
+                            onSubmit={handleSubmitCode}
+                          />
+                        </div>
+                      </div>
+                      <div className="lg:col-span-4 flex flex-col gap-6 order-1 lg:order-2 h-full overflow-hidden">
+                        <div className="aspect-video lg:h-48 flex-shrink-0">
+                          <AIAvatar
+                            isThinking={aiState === "thinking"}
+                            isListening={aiState === "listening"}
+                            isSpeaking={aiState === "speaking"}
+                            volume={volume}
+                          />
+                        </div>
+                        <div className="aspect-video lg:h-50 flex-shrink-0">
+                          <CameraFeed
+                            isMuted={isMuted}
+                            isVideoEnabled={isVideoEnabled}
+                          />
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-hidden">
+                          <TranscriptionChat
+                            messages={messages}
+                            partialTranscript={partialTranscript}
+                            isTranscribing={
+                              aiState === "thinking" && !partialTranscript
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[400px] flex-shrink-0">
+                        <AIAvatar
+                          isThinking={aiState === "thinking"}
+                          isListening={aiState === "listening"}
+                          isSpeaking={aiState === "speaking"}
+                          volume={volume}
+                        />
+                        <CameraFeed
+                          isMuted={isMuted}
+                          isVideoEnabled={isVideoEnabled}
+                        />
+                      </div>
+                      <div className="h-[400px] flex-shrink-0">
+                        <TranscriptionChat
+                          messages={messages}
+                          partialTranscript={partialTranscript}
+                          isTranscribing={
+                            aiState === "thinking" && !partialTranscript
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <InterviewControls
                   isMuted={isMuted}
                   isVideoEnabled={isVideoEnabled}
                   isPaused={isPaused}
+                  isCodingMode={isCodingMode}
                   onToggleMute={() => setIsMuted(!isMuted)}
                   onToggleVideo={() => setIsVideoEnabled(!isVideoEnabled)}
                   onTogglePause={handleTogglePause}
+                  onToggleCodingMode={() => setIsCodingMode(!isCodingMode)}
                   onEndInterview={() => setShowStopModal(true)}
+                  isCodingEnabled={isFeatureEnabled("coding_mode_enabled")}
                 />
                 {feedback && (
                   <Card className="bg-emerald-500/10 border-emerald-200 dark:border-emerald-800">
@@ -628,12 +784,18 @@ function InterviewRoomContent() {
               </div>
               <h2 className="text-2xl font-bold mb-2">Interview Paused</h2>
               <p className="text-muted-foreground mb-6">
-                Take a break. Your progress is saved. Click Resume when you&apos;re ready to continue.
+                Take a break. Your progress is saved. Click Resume when
+                you&apos;re ready to continue.
               </p>
               <p className="text-sm text-muted-foreground mb-8">
-                Time elapsed: {Math.floor(interviewTime / 60)}:{String(interviewTime % 60).padStart(2, '0')}
+                Time elapsed: {Math.floor(interviewTime / 60)}:
+                {String(interviewTime % 60).padStart(2, "0")}
               </p>
-              <Button size="lg" onClick={handleTogglePause} className="gap-2 w-full">
+              <Button
+                size="lg"
+                onClick={handleTogglePause}
+                className="gap-2 w-full"
+              >
                 <Play className="w-5 h-5" />
                 Resume Interview
               </Button>
@@ -642,21 +804,23 @@ function InterviewRoomContent() {
         )}
       </AnimatePresence>
 
-      <InterviewModals
-        showStopModal={showStopModal}
-        showTimeUpModal={showTimeUpModal}
-        showDisconnectModal={showDisconnectModal}
-        onCloseStop={() => setShowStopModal(false)}
-        onConfirmStop={confirmStop}
-        onCloseTimeUp={() => {
-          setShowTimeUpModal(false);
-          handleGetFeedbackAndRedirect();
-        }}
-        onCloseDisconnect={() => {
-          setShowDisconnectModal(false);
-          router.push("/dashboard");
-        }}
-      />
+      {showStopModal && (
+        <InterviewModals
+          showStopModal={showStopModal}
+          showTimeUpModal={showTimeUpModal}
+          showDisconnectModal={showDisconnectModal}
+          onCloseStop={() => setShowStopModal(false)}
+          onConfirmStop={confirmStop}
+          onCloseTimeUp={() => {
+            setShowTimeUpModal(false);
+            handleGetFeedbackAndRedirect();
+          }}
+          onCloseDisconnect={() => {
+            setShowDisconnectModal(false);
+            router.push("/dashboard");
+          }}
+        />
+      )}
     </div>
   );
 }

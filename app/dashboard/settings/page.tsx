@@ -1,25 +1,39 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Navbar } from '@/components/common/navbar';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, ShieldCheck, ShieldAlert, CheckCircle2, QrCode, Lock, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Navbar } from "@/components/common/navbar";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  CheckCircle2,
+  QrCode,
+  Lock,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 
-import { useMutation } from '@tanstack/react-query';
-import { QRCodeSVG } from 'qrcode.react';
+import { useMutation } from "@tanstack/react-query";
+import { QRCodeSVG } from "qrcode.react";
 
-import AuthWrapper from '@/components/auth/auth-wrapper';
+import AuthWrapper from "@/components/auth/auth-wrapper";
 
 export default function SettingsPage() {
   const { user, setup2FA, verify2FA } = useAuth();
   const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
 
   const setup2FAMutation = useMutation({
     mutationFn: async () => {
@@ -28,26 +42,27 @@ export default function SettingsPage() {
     onSuccess: (data) => {
       setQrCodeUrl(data.otpAuthUrl);
       setIsSettingUp2FA(true);
-      toast.info('2FA Setup started. Please scan the QR code.');
+      toast.info("2FA Setup started. Please scan the QR code.");
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Failed to start 2FA setup');
-    }
+      toast.error(err.message || "Failed to start 2FA setup");
+    },
   });
 
   const verify2FAMutation = useMutation({
     mutationFn: async () => {
-      if (twoFactorCode.length < 6) throw new Error('Please enter a 6-digit code');
+      if (twoFactorCode.length < 6)
+        throw new Error("Please enter a 6-digit code");
       await verify2FA(twoFactorCode);
     },
     onSuccess: () => {
       setIsSettingUp2FA(false);
-      setTwoFactorCode('');
-      toast.success('Two-factor authentication enabled successfully!');
+      setTwoFactorCode("");
+      toast.success("Two-factor authentication enabled successfully!");
     },
     onError: (err: any) => {
-      toast.error(err.message || 'Verification failed. Please try again.');
-    }
+      toast.error(err.message || "Verification failed. Please try again.");
+    },
   });
 
   const handleStartSetup = () => {
@@ -70,8 +85,12 @@ export default function SettingsPage() {
             className="space-y-8"
           >
             <div className="flex flex-col gap-2">
-              <h1 className="text-4xl font-extrabold tracking-tight">Account Settings</h1>
-              <p className="text-muted-foreground">Manage your account security and preferences</p>
+              <h1 className="text-4xl font-extrabold tracking-tight">
+                Account Settings
+              </h1>
+              <p className="text-muted-foreground">
+                Manage your account security and preferences
+              </p>
             </div>
 
             <Card className="border-2">
@@ -80,8 +99,12 @@ export default function SettingsPage() {
                   <ShieldCheck className="w-7 h-7" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl font-bold">Security & Authentication</CardTitle>
-                  <CardDescription>Protect your account with additional security layers</CardDescription>
+                  <CardTitle className="text-2xl font-bold">
+                    Security & Authentication
+                  </CardTitle>
+                  <CardDescription>
+                    Protect your account with additional security layers
+                  </CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="space-y-8 pt-6">
@@ -99,7 +122,9 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground max-w-md">
-                      Add an extra layer of security to your account. When enabled, you'll be asked for a code from your authenticator app during login.
+                      Add an extra layer of security to your account. When
+                      enabled, you'll be asked for a code from your
+                      authenticator app during login.
                     </p>
                   </div>
 
@@ -109,7 +134,11 @@ export default function SettingsPage() {
                       disabled={setup2FAMutation.isPending}
                       className="h-12 px-8 font-bold text-base shadow-lg shadow-primary/20"
                     >
-                      {setup2FAMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Shield className="w-5 h-5 mr-2" />}
+                      {setup2FAMutation.isPending ? (
+                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                      ) : (
+                        <Shield className="w-5 h-5 mr-2" />
+                      )}
                       Enable 2FA
                     </Button>
                   )}
@@ -119,7 +148,7 @@ export default function SettingsPage() {
                   {isSettingUp2FA && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
@@ -127,11 +156,17 @@ export default function SettingsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
                           <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">1</div>
-                              <h3 className="text-xl font-extrabold">Scan QR Code</h3>
+                              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                                1
+                              </div>
+                              <h3 className="text-xl font-extrabold">
+                                Scan QR Code
+                              </h3>
                             </div>
                             <p className="text-sm text-muted-foreground leading-relaxed">
-                              Open your authenticator app (like Google Authenticator, Authy, or Microsoft Authenticator) and scan this QR code to add your account.
+                              Open your authenticator app (like Google
+                              Authenticator, Authy, or Microsoft Authenticator)
+                              and scan this QR code to add your account.
                             </p>
                             <div className="p-4 bg-white rounded-2xl inline-block shadow-xl border-4 border-muted">
                               {qrCodeUrl ? (
@@ -154,11 +189,16 @@ export default function SettingsPage() {
 
                           <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">2</div>
-                              <h3 className="text-xl font-extrabold">Enter Verification Code</h3>
+                              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                                2
+                              </div>
+                              <h3 className="text-xl font-extrabold">
+                                Enter Verification Code
+                              </h3>
                             </div>
                             <p className="text-sm text-muted-foreground leading-relaxed">
-                              Once scanned, your app will display a 6-digit code. Enter it here to confirm your setup.
+                              Once scanned, your app will display a 6-digit
+                              code. Enter it here to confirm your setup.
                             </p>
                             <div className="space-y-4">
                               <div className="relative">
@@ -166,7 +206,9 @@ export default function SettingsPage() {
                                 <Input
                                   placeholder="000 000"
                                   value={twoFactorCode}
-                                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                                  onChange={(e) =>
+                                    setTwoFactorCode(e.target.value)
+                                  }
                                   className="h-16 pl-12 text-2xl tracking-[0.5em] font-mono font-bold"
                                   maxLength={6}
                                 />
@@ -177,7 +219,9 @@ export default function SettingsPage() {
                                   disabled={verify2FAMutation.isPending}
                                   className="flex-1 h-14 font-extrabold text-lg shadow-xl shadow-primary/20"
                                 >
-                                  {verify2FAMutation.isPending ? 'Verifying...' : 'Confirm & Enable'}
+                                  {verify2FAMutation.isPending
+                                    ? "Verifying..."
+                                    : "Confirm & Enable"}
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -194,16 +238,6 @@ export default function SettingsPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Session Management</CardTitle>
-                <CardDescription>View and manage your active sessions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground italic">Browser session data integration coming soon...</p>
               </CardContent>
             </Card>
           </motion.div>
