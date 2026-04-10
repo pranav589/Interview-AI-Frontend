@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Navbar } from '@/components/common/navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import NextLink from 'next/link';
 
 import { useMutation } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -62,12 +63,11 @@ function VerifyEmailContent() {
                   exit={{ opacity: 0 }}
                   className="space-y-6 pt-4"
                 >
-                  <div className="flex justify-center">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                  <div className="space-y-4 pt-4">
+                    <Skeleton className="h-20 w-20 rounded-full mx-auto" />
+                    <Skeleton className="h-6 w-48 mx-auto" />
+                    <Skeleton className="h-4 w-64 mx-auto" />
                   </div>
-                  <p className="text-muted-foreground animate-pulse font-medium">
-                    Completing verification...
-                  </p>
                 </motion.div>
               )}
 
@@ -139,8 +139,10 @@ export default function VerifyEmailPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <Suspense fallback={
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+          <div className="w-full max-w-md">
+            <Skeleton className="h-[300px] w-full rounded-xl" />
+          </div>
         </div>
       }>
         <VerifyEmailContent />

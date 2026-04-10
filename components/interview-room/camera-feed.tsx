@@ -22,9 +22,17 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
 
     const startCamera = async () => {
       try {
+        const audioConstraints = {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 16000,
+        };
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 640 }, height: { ideal: 480 } },
-          audio: !isMuted,
+          audio: isMuted ? false : audioConstraints,
         });
 
         if (isCancelled) {
@@ -69,7 +77,10 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
       transition={{ duration: 0.5 }}
       className="h-full"
     >
-      <Card className="h-full overflow-hidden relative bg-black">
+      <Card 
+        className="h-full overflow-hidden relative bg-black"
+        aria-label="Your live camera feed"
+      >
         {isVideoEnabled ? (
           <video
             ref={videoRef}
@@ -77,6 +88,7 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
             playsInline
             muted
             className="w-full h-full object-cover"
+            aria-label="Candidate camera preview"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center flex-col gap-4 bg-muted">

@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   Square,
+  Code2,
 } from "lucide-react";
 
 interface InterviewControlsProps {
@@ -20,6 +21,9 @@ interface InterviewControlsProps {
   onToggleVideo: () => void;
   onTogglePause: () => void;
   onEndInterview: () => void;
+  isCodingMode: boolean;
+  onToggleCodingMode: () => void;
+  isCodingEnabled?: boolean;
 }
 
 export default function InterviewControls({
@@ -30,6 +34,9 @@ export default function InterviewControls({
   onToggleVideo,
   onTogglePause,
   onEndInterview,
+  isCodingMode,
+  onToggleCodingMode,
+  isCodingEnabled = true,
 }: InterviewControlsProps) {
   return (
     <motion.div
@@ -43,6 +50,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onToggleMute}
         className="gap-2"
+        aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
       >
         {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
         {isMuted ? "Unmute" : "Mute"}
@@ -53,6 +61,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onToggleVideo}
         className="gap-2"
+        aria-label={isVideoEnabled ? "Disable camera" : "Enable camera"}
       >
         {isVideoEnabled ? (
           <Video className="w-4 h-4" />
@@ -67,6 +76,7 @@ export default function InterviewControls({
         size="sm"
         onClick={onTogglePause}
         className="gap-2"
+        aria-label={isPaused ? "Resume interview" : "Pause interview"}
       >
         {isPaused ? (
           <Play className="w-4 h-4" />
@@ -76,11 +86,25 @@ export default function InterviewControls({
         {isPaused ? "Resume" : "Pause"}
       </Button>
 
+      {isCodingEnabled && (
+        <Button
+          variant={isCodingMode ? "default" : "outline"}
+          size="sm"
+          onClick={onToggleCodingMode}
+          className="gap-2"
+          aria-label={isCodingMode ? "Hide code editor" : "Show code editor"}
+        >
+          <Code2 className="w-4 h-4" />
+          {isCodingMode ? "Hide Editor" : "Show Editor"}
+        </Button>
+      )}
+
       <Button
         variant="destructive"
         size="sm"
         onClick={onEndInterview}
         className="gap-2"
+        aria-label="End interview"
       >
         <Square className="w-4 h-4 fill-current" />
         End Interview

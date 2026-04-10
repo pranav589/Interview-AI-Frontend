@@ -4,12 +4,14 @@ import { toast } from "sonner";
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error: any) => {
-      toast.error(error?.message || "Something went wrong while fetching data");
+      const message = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Something went wrong while fetching data";
+      toast.error(message);
     },
   }),
   mutationCache: new MutationCache({
     onError: (error: any) => {
-      toast.error(error?.message || "Action failed");
+      const message = error?.response?.data?.message || error?.response?.data?.error?.message || error?.message || "Action failed";
+      toast.error(message);
     },
   }),
   defaultOptions: {

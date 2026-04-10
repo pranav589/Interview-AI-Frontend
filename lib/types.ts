@@ -1,3 +1,5 @@
+import { SubscriptionTier } from "./constants";
+
 export interface ResumeData {
   filename: string;
   uploadedAt: string;
@@ -17,6 +19,9 @@ export interface User {
   hasResume?: boolean;
   role?: "user" | "admin";
   twoFactorEnabled?: boolean;
+  subscriptionTier?: SubscriptionTier;
+  credits?: number;
+  onboardingCompleted?: boolean;
 }
 
 export interface QuestionFeedback {
@@ -83,4 +88,11 @@ export interface InterviewStats {
   totalInterviews: number;
   avgScore: number;
   totalDuration: number;
+  streak: number;
+  percentile: number;
+  radarData: {
+    communication: number;
+    technical: number;
+    confidence: number;
+  };
 }
