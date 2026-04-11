@@ -33,10 +33,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { SUBSCRIPTION_TIERS, DEFAULT_FREE_CREDITS } from "@/lib/constants";
+import { useFeatureFlags } from "@/lib/feature-flags-context";
 
 export function Navbar() {
   const router = useRouter();
   const { user, isLoggedIn, logout } = useAuth();
+  const { isFeatureEnabled } = useFeatureFlags();
 
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -136,12 +138,22 @@ export function Navbar() {
                       </div>
                     </Link>
                   )}
-                  {user?.subscriptionTier === SUBSCRIPTION_TIERS.PRO && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-primary">
-                      <Sparkles className="w-3.5 h-3.5 fill-current" />
                       <span className="text-xs font-bold leading-none">PRO</span>
                     </div>
                   )} */}
+                  {isFeatureEnabled("interview_peer_enabled") &&
+                    user?.interviewerStatus === "approved" && (
+                      <Link href="/interviewer/dashboard">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="font-medium text-primary hover:text-primary/80 hover:bg-primary/5 gap-2 border border-primary/10"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          Interviewer Portal
+                        </Button>
+                      </Link>
+                    )}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button

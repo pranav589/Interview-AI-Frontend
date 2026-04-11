@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Tooltip } from "recharts";
+import { Sparkles } from "lucide-react";
 
 interface SkillRadarChartProps {
   data: {
@@ -23,8 +24,14 @@ export function SkillRadarChart({ data }: SkillRadarChartProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Skill Breakdown</CardTitle>
-        <CardDescription>Average performance across core competencies</CardDescription>
+        <div className="flex items-center justify-between">
+          <CardTitle>Skill Breakdown</CardTitle>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
+            <Sparkles className="w-3 h-3 text-primary" />
+            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">AI Exclusive</span>
+          </div>
+        </div>
+        <CardDescription>Deep analysis from AI-powered practice sessions</CardDescription>
       </CardHeader>
       <CardContent className="pb-0 px-2 flex items-center justify-center min-h-[300px]">
         {hasData ? (

@@ -22,6 +22,13 @@ export interface User {
   subscriptionTier?: SubscriptionTier;
   credits?: number;
   onboardingCompleted?: boolean;
+  interviewerStatus?: "none" | "pending" | "approved" | "rejected";
+  interviewerApplication?: {
+    answers: string[];
+    aiFeedback: string;
+  };
+  maxCandidateExp?: number;
+  expertiseTags?: string[];
 }
 
 export interface QuestionFeedback {
@@ -85,9 +92,14 @@ export interface InterviewDetail extends Interview {
 }
 
 export interface InterviewStats {
-  totalInterviews: number;
-  avgScore: number;
-  totalDuration: number;
+  candidate: {
+    total: { count: number; score: number; time: number };
+    ai: { count: number; score: number; time: number };
+    human: { count: number; score: number; time: number };
+  };
+  interviewer: {
+    total: { count: number; time: number };
+  };
   streak: number;
   percentile: number;
   radarData: {
