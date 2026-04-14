@@ -462,12 +462,12 @@ export default function InterviewDetailPage({
                   {feedback.questions.map((q: any, index: number) => (
                     <Card key={index} className="overflow-hidden">
                       <CardHeader className="bg-muted/30">
-                        <div className="flex items-center justify-between gap-4">
+                        <div className="flex md:items-center justify-between flex-col md:flex-row gap-4">
                           <CardTitle className="text-lg font-semibold flex-1">
                             Q{index + 1}: {q.question}
                           </CardTitle>
                           <div
-                            className={`text-xl font-bold px-3 py-1 rounded-full ${q.score >= 70 ? "bg-green-100 text-green-700" : q.score >= 40 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}
+                            className={`text-xl w-fit font-bold px-3 py-1 rounded-full ${q.score >= 70 ? "bg-green-100 text-green-700" : q.score >= 40 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}
                           >
                             {q.score}/100
                           </div>

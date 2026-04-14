@@ -1,16 +1,19 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { Card } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 
 interface CameraFeedProps {
   isMuted: boolean;
   isVideoEnabled: boolean;
 }
 
-export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps) {
+export default function CameraFeed({
+  isMuted,
+  isVideoEnabled,
+}: CameraFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -36,7 +39,7 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
         });
 
         if (isCancelled) {
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
           return;
         }
 
@@ -48,7 +51,7 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
         }
       } catch (error) {
         if (!isCancelled) {
-          console.error('Error accessing camera:', error);
+          console.error("Error accessing camera:", error);
         }
       }
     };
@@ -58,10 +61,10 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
     return () => {
       isCancelled = true;
       if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
+        localStream.getTracks().forEach((track) => track.stop());
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
       if (videoRef.current) {
@@ -75,9 +78,9 @@ export default function CameraFeed({ isMuted, isVideoEnabled }: CameraFeedProps)
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="h-full"
+      className="h-full max-h-[400px]"
     >
-      <Card 
+      <Card
         className="h-full overflow-hidden relative bg-black"
         aria-label="Your live camera feed"
       >
