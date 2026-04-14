@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { User } from './types';
 import { api } from './api';
 
+import { usePathname } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -36,6 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   
   // Mutations
   const loginMutation = useLogin();
@@ -47,8 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setup2FAMutation = useSetup2FA();
   const verify2FAMutation = useVerify2FA();
 
-  const hasSessionHint = typeof document !== 'undefined' && 
-    document.cookie.split(';').some(item => item.trim().startsWith('isLoggedIn=true'));
+  // Optimization: Check for the 'is-logged-in' hint before making any API calls.
+  // We use localStorage for cross-domain compatibility.
+  const hasSessionHint = typeof window !== 'undefined' && localStorage.getItem('is-logged-in') === 'true';
+  const isAuthCallback = pathname === '/auth/callback';
 
   const { data: user, isLoading: queryLoading } = useQuery({
     queryKey: ['auth-user'],
@@ -56,23 +60,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const response = await api.get<{ user: any }>('user/me');
         if (response.user) {
+          // Sync hint to localStorage if we successfully got a user
+          localStorage.setItem('is-logged-in', 'true');
           return {
             ...response.user,
             avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
           } as User;
         }
+        localStorage.removeItem('is-logged-in');
         return null;
       } catch (err: any) {
-        if (err.response?.status === 401) return null;
+        // Silently return null for 401s
+        if (err.response?.status === 401) {
+          localStorage.removeItem('is-logged-in');
+          return null;
+        }
         throw err;
       }
     },
-    enabled: hasSessionHint,
+    enabled: hasSessionHint || isAuthCallback,
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const isLoading = hasSessionHint ? queryLoading : false;
+  const isLoading = (hasSessionHint || isAuthCallback) ? queryLoading : false;
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });

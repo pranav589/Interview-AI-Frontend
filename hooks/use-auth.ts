@@ -13,6 +13,7 @@ export const useLogin = () => {
     },
     onSuccess: (response) => {
       if (!response.twoFactorRequired) {
+        localStorage.setItem('is-logged-in', 'true');
         queryClient.invalidateQueries({ queryKey: ["auth-user"] });
         toast.success(MESSAGES.AUTH.SIGNIN_SUCCESS);
       }
@@ -29,6 +30,7 @@ export const useSignup = () => {
       return await api.post("auth/register", data);
     },
     onSuccess: () => {
+      localStorage.setItem('is-logged-in', 'true');
       toast.success(MESSAGES.AUTH.SIGNUP_SUCCESS);
     },
     onError: (error: any) => {
@@ -45,7 +47,8 @@ export const useLogout = () => {
       return await api.post("auth/logout");
     },
     onSuccess: () => {
-      // Clear all auth-related cache
+      // Clear all auth-related cache and hint
+      localStorage.removeItem('is-logged-in');
       queryClient.setQueryData(["auth-user"], null);
       queryClient.removeQueries({ queryKey: ["auth-user"] });
       toast.success(MESSAGES.AUTH.LOGOUT_SUCCESS);
