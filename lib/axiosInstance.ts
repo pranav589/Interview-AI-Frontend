@@ -78,12 +78,6 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
-      if (
-        typeof window !== "undefined" &&
-        !window.location.pathname.startsWith("/auth/")
-      ) {
-        window.location.href = "/auth/signin";
-      }
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

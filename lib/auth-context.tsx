@@ -4,6 +4,19 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { User } from './types';
 import { api } from './api';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import {
+  useLogin,
+  useLogout,
+  useSignup,
+  useVerifyEmail,
+  useForgotPassword,
+  useResetPassword,
+  useSetup2FA,
+  useVerify2FA
+} from '@/hooks/use-auth';
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
@@ -22,123 +35,83 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  
+  // Mutations
+  const loginMutation = useLogin();
+  const logoutMutation = useLogout();
+  const signupMutation = useSignup();
+  const verifyEmailMutation = useVerifyEmail();
+  const forgotPasswordMutation = useForgotPassword();
+  const resetPasswordMutation = useResetPassword();
+  const setup2FAMutation = useSetup2FA();
+  const verify2FAMutation = useVerify2FA();
 
-  const checkAuth = useCallback(async () => {
-    try {
-      // Verify session with backend using cookies
-      await refreshUser();
-    } catch (error) {
-      console.error('Initial auth check failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const hasSessionHint = typeof document !== 'undefined' && 
+    document.cookie.split(';').some(item => item.trim().startsWith('isLoggedIn=true'));
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const login = async (email: string, password: string, twoFactorCode?: string) => {
-    try {
-      const response = await api.post<any>('auth/login', { email, password, twoFactorCode });
-
-      if (response.user) {
-        const userData: User = {
-          ...response.user,
-          avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
-        };
-        setUser(userData);
+  const { data: user, isLoading: queryLoading } = useQuery({
+    queryKey: ['auth-user'],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{ user: any }>('user/me');
+        if (response.user) {
+          return {
+            ...response.user,
+            avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
+          } as User;
+        }
+        return null;
+      } catch (err: any) {
+        if (err.response?.status === 401) return null;
+        throw err;
       }
-      return response;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to sign in');
-    }
-  };
+    },
+    enabled: hasSessionHint,
+    retry: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-  const signup = async (name: string, email: string, password: string) => {
-    try {
-      await api.post('auth/register', { name, email, password });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to sign up');
-    }
-  };
+  const isLoading = hasSessionHint ? queryLoading : false;
 
-  const logout = async () => {
-    try {
-      await api.post('auth/logout');
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    } finally {
-      setUser(null);
-    }
-  };
+  const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
+    return await loginMutation.mutateAsync({ email, password, twoFactorCode });
+  }, [loginMutation]);
 
-  const verifyEmail = async (token: string) => {
-    try {
-      await api.get(`auth/verify-email?token=${token}`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Email verification failed');
-    }
-  };
+  const signup = useCallback(async (name: string, email: string, password: string) => {
+    await signupMutation.mutateAsync({ name, email, password });
+  }, [signupMutation]);
 
-  const forgotPassword = async (email: string) => {
-    try {
-      await api.post('auth/forgot-password', { email });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to send reset link');
-    }
-  };
+  const logout = useCallback(async () => {
+    await logoutMutation.mutateAsync();
+  }, [logoutMutation]);
 
-  const resetPassword = async (token: string, password: string) => {
-    try {
-      await api.post('auth/reset-password', { token, password });
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Password reset failed');
-    }
-  };
+  const verifyEmail = useCallback(async (token: string) => {
+    await verifyEmailMutation.mutateAsync(token);
+  }, [verifyEmailMutation]);
 
-  const setup2FA = async () => {
-    try {
-      return await api.post<{ otpAuthUrl: string }>('auth/2fa/setup');
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '2FA setup failed');
-    }
-  };
+  const forgotPassword = useCallback(async (email: string) => {
+    await forgotPasswordMutation.mutateAsync(email);
+  }, [forgotPasswordMutation]);
 
-  const verify2FA = async (code: string) => {
-    try {
-      await api.post('auth/2fa/verify', { code });
-      // Update local user state to reflect 2FA is enabled
-      if (user) {
-        const updatedUser = { ...user, twoFactorEnabled: true };
-        setUser(updatedUser);
-      }
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || '2FA verification failed');
-    }
-  };
+  const resetPassword = useCallback(async (token: string, password: string) => {
+    await resetPasswordMutation.mutateAsync({ token, password });
+  }, [resetPasswordMutation]);
 
-  const refreshUser = async () => {
-    try {
-      const response = await api.get<{ user: any }>('user/me');
-      if (response.user) {
-        const updatedUser = {
-          ...response.user,
-          avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
-        };
-        setUser(updatedUser);
-      } else {
-        setUser(null);
-      }
-    } catch (err) {
-      console.error('Failed to refresh user:', err);
-    }
-  };
+  const setup2FA = useCallback(async () => {
+    return await setup2FAMutation.mutateAsync();
+  }, [setup2FAMutation]);
+
+  const verify2FA = useCallback(async (code: string) => {
+    await verify2FAMutation.mutateAsync(code);
+  }, [verify2FAMutation]);
+
+  const refreshUser = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['auth-user'] });
+  }, [queryClient]);
 
   const value: AuthContextType = {
-    user,
+    user: user || null,
     isLoggedIn: !!user,
     isLoading,
     login,

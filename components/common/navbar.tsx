@@ -255,14 +255,14 @@ export function Navbar() {
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/signup">
+                {/* <Link href="/auth/signup">
                   <Button
                     size="sm"
                     className="px-4 shadow-md shadow-primary/20"
                   >
                     Get Started
                   </Button>
-                </Link>
+                </Link> */}
               </div>
             )}
           </div>
