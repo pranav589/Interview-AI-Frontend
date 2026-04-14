@@ -711,7 +711,7 @@ function InterviewRoomContent() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[400px] flex-shrink-0">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <AIAvatar
                           isThinking={aiState === "thinking"}
                           isListening={aiState === "listening"}
@@ -723,7 +723,7 @@ function InterviewRoomContent() {
                           isVideoEnabled={isVideoEnabled}
                         />
                       </div>
-                      <div className="h-[500px] flex-shrink-0 mt-[8rem]">
+                      <div className="h-[500px]">
                         <TranscriptionChat
                           messages={messages}
                           partialTranscript={partialTranscript}

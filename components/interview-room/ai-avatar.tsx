@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { Card } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import { Brain } from 'lucide-react';
+import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { Brain } from "lucide-react";
 
 interface AIAvatarProps {
   isThinking: boolean;
@@ -22,18 +22,23 @@ export default function AIAvatar({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="h-full"
+      className="h-full max-h-[400px]"
     >
-      <Card 
+      <Card
         className="h-full overflow-hidden relative bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center"
-        aria-label={`AI Interviewer visual representation - currently ${isThinking ? 'thinking' : isSpeaking ? 'speaking' : isListening ? 'listening' : 'ready'}`}
+        aria-label={`AI Interviewer visual representation - currently ${isThinking ? "thinking" : isSpeaking ? "speaking" : isListening ? "listening" : "ready"}`}
       >
         <motion.div
           animate={{
             scale: isSpeaking ? [1, 1.05, 1] : 1,
-            filter: isListening ? 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))' : 'drop-shadow(0 0 0px)',
+            filter: isListening
+              ? "drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))"
+              : "drop-shadow(0 0 0px)",
           }}
-          transition={{ duration: isSpeaking ? 0.8 : 0.3, repeat: isSpeaking ? Infinity : 0 }}
+          transition={{
+            duration: isSpeaking ? 0.8 : 0.3,
+            repeat: isSpeaking ? Infinity : 0,
+          }}
           className="relative"
         >
           {(isListening || isSpeaking) && (
@@ -55,7 +60,7 @@ export default function AIAvatar({
               transition={{
                 duration: 3,
                 repeat: isThinking ? Infinity : 0,
-                ease: 'linear',
+                ease: "linear",
               }}
               className="text-white"
             >
@@ -63,7 +68,11 @@ export default function AIAvatar({
             </motion.div>
 
             {isThinking && (
-              <motion.div className="absolute inset-0 rounded-full bg-primary/20" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }} />
+              <motion.div
+                className="absolute inset-0 rounded-full bg-primary/20"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
             )}
           </motion.div>
         </motion.div>
@@ -75,7 +84,13 @@ export default function AIAvatar({
           className="mt-8 text-center"
         >
           <p className="text-lg font-semibold">
-            {isThinking ? '🤔 Thinking...' : isSpeaking ? '🗣️ Speaking...' : isListening ? '👂 Listening...' : '📞 Ready'}
+            {isThinking
+              ? "🤔 Thinking..."
+              : isSpeaking
+                ? "🗣️ Speaking..."
+                : isListening
+                  ? "👂 Listening..."
+                  : "📞 Ready"}
           </p>
           <motion.p
             animate={{ opacity: [0.5, 1, 0.5] }}
@@ -83,12 +98,12 @@ export default function AIAvatar({
             className="text-sm text-muted-foreground mt-2"
           >
             {isThinking
-              ? 'Processing your response'
+              ? "Processing your response"
               : isSpeaking
-                ? 'Interviewer is speaking'
+                ? "Interviewer is speaking"
                 : isListening
-                  ? 'Listening to you'
-                  : 'Start speaking when ready'}
+                  ? "Listening to you"
+                  : "Start speaking when ready"}
           </motion.p>
         </motion.div>
 
@@ -101,8 +116,8 @@ export default function AIAvatar({
                   height: isSpeaking
                     ? [20, 50, 20]
                     : isListening
-                    ? [10, 10 + (volume * 0.5) + (index * 2), 10]
-                    : [10, 10, 10],
+                      ? [10, 10 + volume * 0.5 + index * 2, 10]
+                      : [10, 10, 10],
                 }}
                 transition={{
                   duration: isSpeaking ? 0.5 : 0.1,
