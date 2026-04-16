@@ -45,12 +45,12 @@ export default function AIAvatar({
             <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="absolute inset-0 -m-12 rounded-full border-2 border-primary/30"
+              className="absolute inset-0 -m-6 sm:-m-12 rounded-full border-2 border-primary/30"
             />
           )}
 
           <motion.div
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center relative"
+            className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center relative"
             whileHover={{ scale: 1.1 }}
           >
             <motion.div
@@ -64,7 +64,7 @@ export default function AIAvatar({
               }}
               className="text-white"
             >
-              <Brain className="w-16 h-16" />
+              <Brain className="w-12 h-12 sm:w-16 sm:h-16" />
             </motion.div>
 
             {isThinking && (
@@ -108,7 +108,7 @@ export default function AIAvatar({
         </motion.div>
 
         {(isSpeaking || isListening) && (
-          <motion.div className="absolute bottom-8 flex gap-1 items-center justify-center h-12">
+          <motion.div className="absolute bottom-4 sm:bottom-8 flex gap-1 items-center justify-center h-12">
             {[0, 1, 2, 3, 4].map((index) => (
               <motion.div
                 key={index}

@@ -56,6 +56,8 @@ import { ReactQueryProvider } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FeatureFlagsProvider } from "@/lib/feature-flags-context";
 
+import Script from "next/script";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -63,6 +65,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <Script
+        defer
+        data-domain="www.interviewai.in.net"
+        data-site-id="gx_Z4uagFrM29mZ"
+        src="https://ghostlyx.com/js/script.min.js"
+      />
       <body className="font-sans antialiased">
         <ReactQueryProvider>
           <ThemeProvider
