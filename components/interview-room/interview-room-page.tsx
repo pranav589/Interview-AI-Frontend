@@ -477,6 +477,10 @@ function InterviewRoomContent() {
               text: MESSAGES.INTERVIEW_ROOM.PREVIOUS_RESTORED,
             },
           ]);
+
+          if (data.isCodingMode) {
+            setIsCodingMode(true);
+          }
         } else if (data.type === "error") {
           setMessages((prev) => [
             ...prev,
