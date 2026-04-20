@@ -30,6 +30,8 @@ export interface QuestionFeedback {
   score: number;
   feedback: string;
   modelAnswer: string;
+  strongPoints?: string;
+  toImprove?: string;
 }
 
 export interface Feedback {

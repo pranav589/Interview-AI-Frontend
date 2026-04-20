@@ -18,6 +18,7 @@ export const MESSAGES = {
   RESUME: {
     UPLOAD_SUCCESS: 'Resume uploaded and analyzed!',
     UPLOAD_FAILED: 'Failed to upload resume',
+    DOWNLOAD_SUCCESS: 'Resume downloaded successfully!',
     REMOVE_SUCCESS: 'Resume removed successfully!',
     REMOVE_FAILED: 'Failed to remove resume',
     PDF_ONLY: 'Please upload a PDF file.',

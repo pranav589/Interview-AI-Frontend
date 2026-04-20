@@ -1,16 +1,27 @@
-'use client';
+import { Metadata } from "next";
+import { Suspense } from "react";
+import { Navbar } from "@/components/common/navbar";
+import ProfilePage from "@/components/profile/profile-page";
+import { ProfileSkeleton } from "@/components/profile/profile-skeleton";
+import { getQueryClient } from "@/lib/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-import AuthWrapper from '@/components/auth/auth-wrapper';
-import { Navbar } from '@/components/common/navbar';
-import ProfilePage from '@/components/profile/profile-page';
+export const metadata: Metadata = {
+  title: "My Profile",
+  description: "Manage your account settings, resume, and preferences.",
+};
 
-export default function Profile() {
+export default async function Profile() {
+  const queryClient = getQueryClient();
+
   return (
-    <AuthWrapper>
-      <div className="min-h-screen bg-background">
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="min-h-screen bg-background text-foreground">
         <Navbar />
-        <ProfilePage />
+        <Suspense fallback={<ProfileSkeleton />}>
+          <ProfilePage />
+        </Suspense>
       </div>
-    </AuthWrapper>
+    </HydrationBoundary>
   );
 }
