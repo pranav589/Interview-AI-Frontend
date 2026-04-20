@@ -1,43 +1,52 @@
-'use client';
-import { useParams } from 'next/navigation';
-import AuthWrapper from '@/components/auth/auth-wrapper';
-import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Navbar } from '@/components/common/navbar';
+import { Metadata } from "next";
+import { Suspense } from "react";
+import InterviewDetailPage from "@/components/interview/interview-detail-page";
+import { InterviewDetailSkeleton } from "@/components/interview/interview-detail-skeleton";
+import { Navbar } from "@/components/common/navbar";
+import { getQueryClient } from "@/lib/react-query";
+import { apiServer, prefetchAuthUser } from "@/lib/api-server";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-const InterviewDetailPage = dynamic(() => import('@/components/interview/interview-detail-page'), {
-  loading: () => (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-12 animate-pulse">
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-12 w-2/3" />
-          <Skeleton className="h-6 w-1/3" />
-        </div>
-        <div className="flex justify-center">
-          <Skeleton className="w-56 h-56 rounded-full" />
-        </div>
-        <div className="space-y-6">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Skeleton className="h-64 w-full rounded-xl" />
-            <Skeleton className="h-64 w-full rounded-xl" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-});
+export const metadata: Metadata = {
+  title: "Interview Details",
+  description: "Detailed analysis and feedback for your AI interview session.",
+};
 
-export default function InterviewDetail() {
-  const params = useParams();
-  const id = params.id;
-  const interviewId = Array.isArray(id) ? id[0] : (id || '');
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function InterviewDetail({ params }: Props) {
+  const { id } = await params;
+  const queryClient = getQueryClient();
+
+  // Get User Data (Already seeded by RootLayout)
+  const user = queryClient.getQueryData<any>(["auth-user"]);
+
+  // Pre-fetch Interview Details (NOT awaited to enable Streaming Suspense)
+  // Only trigger if we have a user session.
+  if (user) {
+    queryClient.prefetchQuery({
+      queryKey: ["interview", id],
+      queryFn: async () => {
+        try {
+          const res = await apiServer<{ data: any }>(`interview/${id}`);
+          return res.data;
+        } catch (e) {
+          return null;
+        }
+      },
+    });
+  }
 
   return (
-    <AuthWrapper>
-      <InterviewDetailPage interviewId={interviewId} />
-    </AuthWrapper>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <Suspense fallback={<InterviewDetailSkeleton />}>
+          <InterviewDetailPage interviewId={id} />
+        </Suspense>
+      </div>
+    </HydrationBoundary>
   );
 }

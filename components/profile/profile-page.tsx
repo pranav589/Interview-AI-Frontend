@@ -15,24 +15,12 @@ import { MESSAGES } from '@/lib/constants';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoggedIn, isLoading, logout } = useAuth();
+  const { user, isLoggedIn, logout } = useAuth();
   const [resumeModal, setResumeModal] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(user?.name || '');
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isLoggedIn || !user) {
-    router.push('/auth/signin');
+  if (!user) {
     return null;
   }
 

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -16,6 +16,16 @@ export const useInterviews = (params?: { page?: number; limit?: number; type?: s
   });
 };
 
+export const useSuspenseInterviews = (params?: { page?: number; limit?: number; type?: string; difficulty?: string; status?: string }) => {
+  return useSuspenseQuery({
+    queryKey: ["interviews", params],
+    queryFn: async () => {
+      const response = await api.get<{ data: Interview[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>("interview", { params });
+      return response;
+    },
+  });
+};
+
 export const useInterviewDetails = (id: string) => {
   return useQuery({
     queryKey: ["interview", id],
@@ -24,6 +34,16 @@ export const useInterviewDetails = (id: string) => {
       return response.data as InterviewDetail;
     },
     enabled: !!id,
+  });
+};
+
+export const useSuspenseInterviewDetails = (id: string) => {
+  return useSuspenseQuery({
+    queryKey: ["interview", id],
+    queryFn: async () => {
+      const response = await api.get<{ data: any }>(`interview/${id}`);
+      return response.data as InterviewDetail;
+    },
   });
 };
 
@@ -38,6 +58,19 @@ export const useInterviewStats = () => {
       return response.data;
     },
     enabled: !!user,
+  });
+};
+
+export const useSuspenseInterviewStats = () => {
+  const { user } = useAuth();
+  return useSuspenseQuery({
+    queryKey: ["interview-stats", user?.id],
+    queryFn: async () => {
+      const response = await api.get<{ data: InterviewStats }>(
+        "interview/stats",
+      );
+      return response.data;
+    },
   });
 };
 
@@ -71,5 +104,16 @@ export const useScoreHistory = () => {
       return response.data;
     },
     enabled: !!user,
+  });
+};
+
+export const useSuspenseScoreHistory = () => {
+  const { user } = useAuth();
+  return useSuspenseQuery({
+    queryKey: ["score-history", user?.id],
+    queryFn: async () => {
+      const response = await api.get<{ data: Array<{ date: string; score: number; type: string }> }>("interview/score-history");
+      return response.data;
+    },
   });
 };
