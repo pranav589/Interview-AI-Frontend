@@ -31,6 +31,7 @@ interface AuthContextType {
   setup2FA: () => Promise<{ otpAuthUrl: string }>;
   verify2FA: (code: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+  isClient: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -141,7 +142,8 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
     resetPassword,
     setup2FA,
     verify2FA,
-    refreshUser
+    refreshUser,
+    isClient
   };
 
   return (
