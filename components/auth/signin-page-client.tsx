@@ -11,9 +11,9 @@ export default function SigninPageClient() {
 
   useEffect(() => {
     if (!isLoading && isLoggedIn) {
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     }
-  }, [isLoggedIn, isLoading, router]);
+  }, [isLoggedIn, isLoading]);
 
   if (isLoading) {
     return (
