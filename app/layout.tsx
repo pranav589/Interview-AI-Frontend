@@ -99,7 +99,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <Script
-        defer
+        strategy="lazyOnload"
         data-domain="www.interviewai.in.net"
         data-site-id="gx_Z4uagFrM29mZ"
         src="https://ghostlyx.com/js/script.min.js"
