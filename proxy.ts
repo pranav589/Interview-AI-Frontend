@@ -118,17 +118,24 @@ export default async function proxy(request: NextRequest) {
 
   const hasSession = accessToken || refreshToken;
 
-  // Redirect logic
-  // [DISABLED FOR PRODUCTION CROSS-DOMAIN SUPPORT]
-  // In cross-domain setups, the middleware cannot see the accessToken cookie.
-  // We move redirect logic to the client-side AuthWrapper.
-  /*
+  // NOTE: In cross-domain production (frontend on Vercel, backend on Render),
+  // the browser sends backend-scoped cookies to the backend only, not to the
+  // Next.js server. So `accessToken` / `refreshToken` will always be empty here.
+  // We CANNOT reliably block protected routes server-side in this setup.
+  // Client-side AuthWrapper handles redirects instead.
+  //
+  // This redirect is only useful in same-domain / local dev where cookies ARE present.
   if (isProtectedRoute && !hasSession) {
-    const url = new URL("/auth/signin", request.url);
-    url.searchParams.set("callbackUrl", encodeURI(pathname));
-    return NextResponse.redirect(url);
+    // Only redirect if we're in same-domain mode (local dev) where cookies exist.
+    // In production cross-domain, hasSession is always false so we skip.
+    // The check below ensures we only redirect when the middleware actually saw cookies.
+    const hadCookiesInRequest = !!request.cookies.get("accessToken") || !!request.cookies.get("refreshToken");
+    if (hadCookiesInRequest) {
+      const url = new URL("/auth/signin", request.url);
+      url.searchParams.set("callbackUrl", encodeURI(pathname));
+      return NextResponse.redirect(url);
+    }
   }
-  */
 
   if ((isAuthPage || isLandingPage) && hasSession) {
     if (
