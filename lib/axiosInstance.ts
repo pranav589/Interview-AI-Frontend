@@ -35,6 +35,15 @@ axiosInstance.interceptors.response.use(
       error.message = (error.response.data as any).message || error.message;
     }
 
+    if (error.response?.status === 429) {
+      console.warn("[API] Rate limit hit. Please wait before retrying.");
+      if (originalRequest.url?.includes("auth/refresh-token")) {
+        processQueue(error, null);
+        isRefreshing = false;
+      }
+      return Promise.reject(error);
+    }
+
     if (
       !originalRequest ||
       error.response?.status !== 401 ||
@@ -73,11 +82,29 @@ axiosInstance.interceptors.response.use(
     isRefreshing = true;
 
     try {
+      console.log("[Auth] Access token expired. Attempting to refresh...");
       await axiosInstance.post("auth/refresh-token");
+      console.log(
+        "[Auth] Token refresh successful. Retrying original request.",
+      );
       processQueue(null);
       return axiosInstance(originalRequest);
-    } catch (refreshError) {
+    } catch (refreshError: any) {
       processQueue(refreshError, null);
+
+      const isSessionExpired =
+        refreshError.response?.status === 401 ||
+        refreshError.response?.status === 400;
+
+      if (typeof window !== "undefined" && isSessionExpired) {
+        console.error(
+          "[Auth] Refresh token expired or invalid. Redirecting to sign-in.",
+        );
+        // Clear session hint
+        localStorage.removeItem("is-logged-in");
+        window.location.href = "/auth/signin";
+      }
+
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

@@ -35,7 +35,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, serverSessionHint }: { children: React.ReactNode, serverSessionHint?: boolean }) {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   
@@ -49,10 +49,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setup2FAMutation = useSetup2FA();
   const verify2FAMutation = useVerify2FA();
 
-  // Optimization: Check for the 'is-logged-in' hint before making any API calls.
-  // We use localStorage for cross-domain compatibility.
-  const hasSessionHint = typeof window !== 'undefined' && localStorage.getItem('is-logged-in') === 'true';
   const isAuthCallback = pathname === '/auth/callback';
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Use serverSessionHint during SSR to perfectly match HTML. 
+  // Switch to localStorage after hydration to support token updates across tabs or faster client navigation.
+  const hasSessionHint = isClient 
+    ? (typeof window !== 'undefined' && localStorage.getItem('is-logged-in') === 'true')
+    : !!serverSessionHint;
 
   const { data: user, isLoading: queryLoading } = useQuery({
     queryKey: ['auth-user'],
@@ -61,18 +69,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const response = await api.get<{ user: any }>('user/me');
         if (response.user) {
           // Sync hint to localStorage if we successfully got a user
-          localStorage.setItem('is-logged-in', 'true');
+          if (typeof window !== 'undefined') localStorage.setItem('is-logged-in', 'true');
           return {
             ...response.user,
             avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
           } as User;
         }
-        localStorage.removeItem('is-logged-in');
+        if (typeof window !== 'undefined') localStorage.removeItem('is-logged-in');
         return null;
       } catch (err: any) {
         // Silently return null for 401s
         if (err.response?.status === 401) {
-          localStorage.removeItem('is-logged-in');
+          if (typeof window !== 'undefined') localStorage.removeItem('is-logged-in');
           return null;
         }
         throw err;
@@ -83,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const isLoading = (hasSessionHint || isAuthCallback) ? queryLoading : false;
+  const isLoading = (!isClient && serverSessionHint) || (hasSessionHint || isAuthCallback) ? queryLoading : false;
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });

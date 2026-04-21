@@ -71,8 +71,8 @@ export function Navbar() {
             </motion.div>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            {mounted && (
+          <div className="flex items-center gap-2 sm:gap-4 min-w-[36px]">
+            {mounted ? (
               <Button
                 variant="ghost"
                 size="icon"
@@ -96,6 +96,8 @@ export function Navbar() {
                   </motion.div>
                 </AnimatePresence>
               </Button>
+            ) : (
+              <div className="w-9 h-9" />
             )}
 
             {isLoggedIn ? (

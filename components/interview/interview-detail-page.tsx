@@ -1,7 +1,6 @@
 "use client";
 
-import { useInterviewDetails } from "@/hooks/use-interviews";
-import { Navbar } from "@/components/common/navbar";
+import { useSuspenseInterviewDetails } from "@/hooks/use-interviews";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,52 +40,17 @@ export default function InterviewDetailPage({
   interviewId,
 }: InterviewDetailPageProps) {
   const { user } = useAuth();
-  const {
-    data: interview,
-    isLoading,
-    isError,
-  } = useInterviewDetails(interviewId);
 
-  if (isLoading) {
+  const { data: interview } = useSuspenseInterviewDetails(interviewId);
+
+  if (!interview) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-          <div className="space-y-4 mb-8">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-2/3" />
-            <Skeleton className="h-4 w-1/3" />
-          </div>
-
-          <div className="flex justify-center mb-10">
-            <Skeleton className="w-56 h-56 rounded-full" />
-          </div>
-
-          <div className="space-y-6">
-            <Skeleton className="h-32 w-full rounded-xl" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Skeleton className="h-64 w-full rounded-xl" />
-              <Skeleton className="h-64 w-full rounded-xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isError || !interview) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="flex flex-col items-center justify-center px-4 py-20">
-          <Card className="max-w-md w-full">
-            <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="text-destructive w-6 h-6" />
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Interview not found or failed to load
-              </p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+          <Card className="max-w-md w-full relative z-10">
+            <CardContent className="pt-6">
+              <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+              <p className="mb-4">Interview not found or failed to load</p>
               <Link href="/dashboard">
                 <Button variant="outline">Back to Dashboard</Button>
               </Link>
@@ -99,9 +63,10 @@ export default function InterviewDetailPage({
 
   const feedbackData = interview.feedbackId;
 
+  const iType = interview.interviewType || "interview";
   const displayTitle = interview.jobTitle
     ? `${interview.jobTitle} Interview`
-    : `${interview.interviewType.charAt(0).toUpperCase() + interview.interviewType.slice(1)} Interview`;
+    : `${iType.charAt(0).toUpperCase() + iType.slice(1)} Interview`;
 
   const feedback = {
     overallScore: feedbackData?.overallScore || interview.score || 0,
@@ -120,8 +85,6 @@ export default function InterviewDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <div className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Back Button */}
@@ -398,115 +361,63 @@ export default function InterviewDetailPage({
           </motion.div>
 
           {/* Per-Question Breakdown */}
-          {
-            // user?.subscriptionTier === SUBSCRIPTION_TIERS.FREE ? (
-            //   <motion.div
-            //     initial={{ opacity: 0 }}
-            //     animate={{ opacity: 1 }}
-            //     transition={{ duration: 0.5, delay: 0.55 }}
-            //     className="mb-8"
-            //   >
-            //     <Card className="relative overflow-hidden border-2 border-primary/20 bg-muted/30">
-            //       <div className="absolute inset-0 backdrop-blur-[2px] z-0" />
-            //       <CardHeader className="relative z-10 text-center pb-2">
-            //         <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            //           <Lock className="w-6 h-6 text-primary" />
-            //         </div>
-            //         <CardTitle className="text-2xl font-bold">
-            //           Detailed Feedback Locked
-            //         </CardTitle>
-            //         <CardDescription>
-            //           Per-question breakdown and Model Answers are exclusive to
-            //           Pro users.
-            //         </CardDescription>
-            //       </CardHeader>
-            //       <CardContent className="relative z-10 space-y-6 pt-4">
-            //         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            //           {[1, 2, 3, 4].map((i) => (
-            //             <div
-            //               key={i}
-            //               className="h-16 bg-muted animate-pulse rounded-lg border border-border/50"
-            //             />
-            //           ))}
-            //         </div>
-            //         <div className="flex flex-col items-center gap-4">
-            //           <p className="text-sm text-muted-foreground text-center max-w-sm">
-            //             Upgrade to unlock world-class model answers and specific
-            //             feedback for every single turn of your interview.
-            //           </p>
-            //           <Button
-            //             asChild
-            //             className="gap-2 shadow-lg shadow-primary/20"
-            //           >
-            //             <Link href="/pricing">
-            //               <Sparkles className="w-4 h-4" />
-            //               Upgrade to Pro for Detailed Insights
-            //             </Link>
-            //           </Button>
-            //         </div>
-            //       </CardContent>
-            //     </Card>
-            //   </motion.div>
-            // ) : (
-            feedback.questions && feedback.questions.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.55 }}
-                className="mb-8 space-y-4"
-              >
-                <h2 className="text-2xl font-bold mb-4">
-                  Question-by-Question Breakdown
-                </h2>
-                <div className="space-y-4">
-                  {feedback.questions.map((q: any, index: number) => (
-                    <Card key={index} className="overflow-hidden">
-                      <CardHeader className="bg-muted/30">
-                        <div className="flex md:items-center justify-between flex-col md:flex-row gap-4">
-                          <CardTitle className="text-lg font-semibold flex-1">
-                            Q{index + 1}: {q.question}
-                          </CardTitle>
-                          <div
-                            className={`text-xl w-fit font-bold px-3 py-1 rounded-full ${q.score >= 70 ? "bg-green-100 text-green-700" : q.score >= 40 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}
-                          >
-                            {q.score}/100
-                          </div>
+          {feedback.questions && feedback.questions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.55 }}
+              className="mb-8 space-y-4"
+            >
+              <h2 className="text-2xl font-bold mb-4">
+                Question-by-Question Breakdown
+              </h2>
+              <div className="space-y-4">
+                {feedback.questions.map((q: any, index: number) => (
+                  <Card key={index} className="overflow-hidden">
+                    <CardHeader className="bg-muted/30">
+                      <div className="flex md:items-center justify-between flex-col md:flex-row gap-4">
+                        <CardTitle className="text-lg font-semibold flex-1">
+                          Q{index + 1}: {q.question}
+                        </CardTitle>
+                        <div
+                          className={`text-xl w-fit font-bold px-3 py-1 rounded-full ${q.score >= 70 ? "bg-green-100 text-green-700" : q.score >= 40 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}
+                        >
+                          {q.score}/100
                         </div>
-                      </CardHeader>
-                      <CardContent className="pt-6 space-y-4">
-                        <div>
-                          <h4 className="font-semibold text-sm text-muted-foreground mb-1">
-                            Your Answer
-                          </h4>
-                          <p className="text-sm bg-muted/50 p-3 rounded-lg border italic">
-                            "{q.userAnswer}"
-                          </p>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-6 space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">
+                          Your Answer
+                        </h4>
+                        <p className="text-sm bg-muted/50 p-3 rounded-lg border italic">
+                          "{q.userAnswer}"
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">
+                          Feedback
+                        </h4>
+                        <p className="text-sm">{q.feedback}</p>
+                      </div>
+                      <details className="group border rounded-lg overflow-hidden">
+                        <summary className="cursor-pointer text-sm font-semibold p-3 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-between">
+                          <span>See Ideal Answer</span>
+                          <span className="text-xs transition-transform group-open:rotate-180">
+                            ▼
+                          </span>
+                        </summary>
+                        <div className="p-3 text-sm bg-background leading-relaxed whitespace-pre-wrap border-t">
+                          {q.modelAnswer}
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-sm text-muted-foreground mb-1">
-                            Feedback
-                          </h4>
-                          <p className="text-sm">{q.feedback}</p>
-                        </div>
-                        <details className="group border rounded-lg overflow-hidden">
-                          <summary className="cursor-pointer text-sm font-semibold p-3 bg-primary/5 hover:bg-primary/10 transition-colors flex items-center justify-between">
-                            <span>See Ideal Answer</span>
-                            <span className="text-xs transition-transform group-open:rotate-180">
-                              ▼
-                            </span>
-                          </summary>
-                          <div className="p-3 text-sm bg-background leading-relaxed whitespace-pre-wrap border-t">
-                            {q.modelAnswer}
-                          </div>
-                        </details>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </motion.div>
-              // )
-            )
-          }
+                      </details>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Transcript */}
           <motion.div
