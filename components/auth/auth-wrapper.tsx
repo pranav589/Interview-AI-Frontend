@@ -11,7 +11,7 @@ interface AuthWrapperProps {
 }
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { isLoggedIn, isLoading } = useAuth();
+    const { isLoggedIn, isLoading, isClient } = useAuth();
     const router = useRouter();
     const [showLoading, setShowLoading] = useState(false);
 
@@ -35,10 +35,10 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }, [isLoading]);
 
     useEffect(() => {
-        if (!isLoading && !isLoggedIn) {
+        if (isClient && !isLoading && !isLoggedIn) {
             router.push('/auth/signin');
         }
-    }, [isLoading, isLoggedIn, router]);
+    }, [isClient, isLoading, isLoggedIn, router]);
 
     if (isLoading && showLoading) {
         return (
