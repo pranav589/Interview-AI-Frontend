@@ -96,12 +96,8 @@ export async function prefetchAuthUser(queryClient: QueryClient) {
   await queryClient.prefetchQuery({
     queryKey: ["auth-user"],
     queryFn: async () => {
-      try {
-        const res = await apiServer<{ user: any }>("user/me");
-        return res.user;
-      } catch (e) {
-        return null;
-      }
+      const res = await apiServer<{ user: any }>("user/me");
+      return res.user;
     },
   });
 }

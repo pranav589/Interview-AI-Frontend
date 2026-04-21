@@ -59,11 +59,13 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
 
   // Use serverSessionHint during SSR to perfectly match HTML. 
   // Switch to localStorage after hydration to support token updates across tabs or faster client navigation.
+  const isLocalStorageLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('is-logged-in') === 'true' : false;
+  
   const hasSessionHint = isClient 
-    ? (typeof window !== 'undefined' && localStorage.getItem('is-logged-in') === 'true')
+    ? isLocalStorageLoggedIn
     : !!serverSessionHint;
 
-  const { data: user, isLoading: queryLoading } = useQuery({
+  const { data: user, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ['auth-user'],
     queryFn: async () => {
       try {
@@ -92,7 +94,11 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const isLoading = (!isClient && serverSessionHint) || (hasSessionHint || isAuthCallback) ? queryLoading : false;
+  const isLoading = (!isClient && serverSessionHint) || isAuthCallback 
+    ? queryLoading 
+    : (isClient && isLocalStorageLoggedIn && !user) 
+      ? true 
+      : queryLoading;
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });
