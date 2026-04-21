@@ -1,41 +1,76 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 export function FadeInWhenVisible({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "-50px" }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay }}
-      viewport={{ once: true }}
+    <div
+      ref={ref}
+      style={{
+        transitionDelay: `${delay}s`,
+        willChange: "opacity, transform"
+      }}
+      className={`transition-all duration-500 ease-out ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
 export function ScaleInWhenVisible({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "0px" }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay }}
-      viewport={{ once: true }}
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}s` }}
+      className={`transition-all duration-500 ${
+        isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+      }`}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
 export function HoverCardWrapper({ children }: { children: ReactNode }) {
   return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      className="px-2 h-full"
-    >
+    <div className="h-full transition-transform duration-300 hover:-translate-y-1 will-change-transform">
       {children}
-    </motion.div>
+    </div>
   );
 }

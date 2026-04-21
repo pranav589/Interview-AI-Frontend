@@ -1,65 +1,42 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: "easeOut" },
-  },
-};
-
 export function HeroContent() {
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="relative max-w-5xl mx-auto text-center"
-    >
-      <motion.div variants={itemVariants} className="mb-8">
+    <div className="relative max-w-5xl mx-auto text-center">
+      <div 
+        className="mb-8 animate-slide-up-fade"
+        style={{ animationDelay: "100ms" }}
+      >
         <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
           ✨ Your AI Interview Coach
         </span>
-      </motion.div>
+      </div>
 
-      <motion.h1
-        variants={itemVariants}
-        className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-6 text-pretty"
+      <h1 
+        className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-6 text-pretty animate-slide-up-fade"
+        style={{ animationDelay: "300ms" }}
       >
         Master Your Interviews with{" "}
         <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           AI Coaching
         </span>
-      </motion.h1>
+      </h1>
 
-      <motion.p
-        variants={itemVariants}
-        className="text-lg sm:text-xl text-muted-foreground mb-12 text-balance max-w-2xl mx-auto"
+      <p 
+        className="text-lg sm:text-xl text-muted-foreground mb-12 text-balance max-w-2xl mx-auto animate-slide-up-fade"
+        style={{ animationDelay: "500ms" }}
       >
         Practice real interviews with our AI interviewer, get instant
         feedback, and build confidence for your next opportunity.
-      </motion.p>
+      </p>
 
-      <motion.div
-        variants={itemVariants}
-        className="flex flex-col sm:flex-row gap-4 justify-center mb-20 px-4"
+      <div 
+        className="flex flex-col sm:flex-row gap-4 justify-center mb-20 px-4 animate-slide-up-fade"
+        style={{ animationDelay: "700ms" }}
       >
         <Link href="/auth/signup">
           <Button size="lg" className="w-full sm:w-auto gap-2">
@@ -72,8 +49,8 @@ export function HeroContent() {
             Sign In
           </Button>
         </Link>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -87,20 +64,8 @@ export function HeroBackground() {
                        radial-gradient(ellipse at 70% 60%, oklch(0.65 0.2 300 / 0.1) 0%, transparent 50%)`,
         }}
       />
-      <motion.div
-        animate={{
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{ duration: 8, repeat: Infinity }}
-        className="absolute top-40 right-40 w-72 h-72 bg-primary/10 rounded-full blur-3xl"
-      />
-      <motion.div
-        animate={{
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{ duration: 8, repeat: Infinity, delay: 2 }}
-        className="absolute bottom-40 left-40 w-72 h-72 bg-primary/5 rounded-full blur-3xl"
-      />
+      <div className="absolute top-40 right-40 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-hero-pulse" />
+      <div className="absolute bottom-40 left-40 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-hero-pulse-delayed" />
     </div>
   );
 }

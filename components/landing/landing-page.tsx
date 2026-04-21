@@ -98,7 +98,10 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="px-4 py-24 sm:px-6 lg:px-8 bg-muted/30">
+      <section 
+        className="px-4 py-24 sm:px-6 lg:px-8 bg-muted/30"
+        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px', contain: 'layout paint' }}
+      >
         <div className="max-w-7xl mx-auto">
           <FadeInWhenVisible>
             <div className="text-center mb-16">
@@ -116,7 +119,7 @@ export default function LandingPage() {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <FadeInWhenVisible key={`feature-${index}`} delay={index * 0.1}>
+                <FadeInWhenVisible key={`feature-${index}`} delay={index * 0.05}>
                   <HoverCardWrapper>
                     <Card className="h-full hover:shadow-lg transition-all duration-300 border-primary/5 hover:border-primary/20 bg-background/50 backdrop-blur-sm">
                       <CardHeader>
@@ -140,7 +143,10 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
+      <section 
+        className="px-4 py-24 sm:px-6 lg:px-8"
+        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px', contain: 'layout paint' }}
+      >
         <div className="max-w-7xl mx-auto">
           <FadeInWhenVisible>
             <div className="text-center mb-20">
@@ -182,7 +188,10 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
+      <section 
+        className="px-4 py-24 sm:px-6 lg:px-8"
+        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 300px', contain: 'layout paint' }}
+      >
         <FadeInWhenVisible>
           <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/15 via-primary/5 to-transparent rounded-3xl p-12 text-center border border-primary/20 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
