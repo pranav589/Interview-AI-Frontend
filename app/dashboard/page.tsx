@@ -4,6 +4,7 @@ import { Navbar } from "@/components/common/navbar";
 import { getQueryClient } from "@/lib/react-query";
 import { apiServer } from "@/lib/api-server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import AuthWrapper from "@/components/auth/auth-wrapper";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
@@ -52,30 +53,32 @@ export default async function Dashboard() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main id="main-content" className="px-4 py-8 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <DashboardHeader userName={user?.name} />
+      <AuthWrapper>
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main id="main-content" className="px-4 py-8 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+              <DashboardHeader userName={user?.name} />
 
-            <Suspense fallback={<StatsSkeleton />}>
-              <DashboardStats />
-            </Suspense>
+              <Suspense fallback={<StatsSkeleton />}>
+                <DashboardStats />
+              </Suspense>
 
-            <Suspense fallback={<ChartsSkeleton />}>
-              <DashboardCharts />
-            </Suspense>
+              <Suspense fallback={<ChartsSkeleton />}>
+                <DashboardCharts />
+              </Suspense>
 
-            <Suspense fallback={<InterviewsListSkeleton />}>
-              <RecentInterviewsList />
-            </Suspense>
+              <Suspense fallback={<InterviewsListSkeleton />}>
+                <RecentInterviewsList />
+              </Suspense>
 
-            <Suspense fallback={null}>
-              <DashboardOnboarding />
-            </Suspense>
-          </div>
-        </main>
-      </div>
+              <Suspense fallback={null}>
+                <DashboardOnboarding />
+              </Suspense>
+            </div>
+          </main>
+        </div>
+      </AuthWrapper>
     </HydrationBoundary>
   );
 }

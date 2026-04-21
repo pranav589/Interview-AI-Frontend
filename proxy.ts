@@ -119,11 +119,16 @@ export default async function proxy(request: NextRequest) {
   const hasSession = accessToken || refreshToken;
 
   // Redirect logic
+  // [DISABLED FOR PRODUCTION CROSS-DOMAIN SUPPORT]
+  // In cross-domain setups, the middleware cannot see the accessToken cookie.
+  // We move redirect logic to the client-side AuthWrapper.
+  /*
   if (isProtectedRoute && !hasSession) {
     const url = new URL("/auth/signin", request.url);
     url.searchParams.set("callbackUrl", encodeURI(pathname));
     return NextResponse.redirect(url);
   }
+  */
 
   if ((isAuthPage || isLandingPage) && hasSession) {
     if (

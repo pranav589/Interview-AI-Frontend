@@ -18,10 +18,10 @@ export default function AuthCallbackPage() {
         await refreshUser();
 
         toast.success(MESSAGES.AUTH.CALLBACK_SUCCESS);
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       } catch (error) {
         toast.error("Authentication failed. Please try again.");
-        router.push("/auth/signin");
+        window.location.href = "/auth/signin";
       }
     };
 

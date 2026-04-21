@@ -114,7 +114,7 @@ export function Navbar() {
                   </Button>
                 </Link> */}
                 <div className="hidden md:flex items-center gap-4">
-                  <Link href="/dashboard">
+                  <a href="/dashboard">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -122,7 +122,7 @@ export function Navbar() {
                     >
                       Dashboard
                     </Button>
-                  </Link>
+                  </a>
                   {/* <Link href="/pricing">
                     <Button variant="ghost" size="sm" className="font-medium text-muted-foreground hover:text-foreground">
                       Pricing
@@ -211,7 +211,7 @@ export function Navbar() {
                           </span>
                         </div>
 
-                        <Link href="/dashboard" className="block">
+                        <a href="/dashboard" className="block">
                           <Button
                             variant="ghost"
                             className="w-full justify-start h-12 text-base font-medium gap-3"
@@ -219,7 +219,7 @@ export function Navbar() {
                             <LayoutDashboard className="w-5 h-5" />
                             Dashboard
                           </Button>
-                        </Link>
+                        </a>
                         {/* <Link href="/pricing" className="block">
                           <Button variant="ghost" className="w-full justify-start h-12 text-base font-medium gap-3">
                             <ShieldCheck className="w-5 h-5" />

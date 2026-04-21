@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Navbar } from "@/components/common/navbar";
 import ProfilePage from "@/components/profile/profile-page";
 import { ProfileSkeleton } from "@/components/profile/profile-skeleton";
+import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
@@ -16,12 +17,14 @@ export default async function Profile() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="min-h-screen bg-background text-foreground">
-        <Navbar />
-        <Suspense fallback={<ProfileSkeleton />}>
-          <ProfilePage />
-        </Suspense>
-      </div>
+      <AuthWrapper>
+        <div className="min-h-screen bg-background text-foreground">
+          <Navbar />
+          <Suspense fallback={<ProfileSkeleton />}>
+            <ProfilePage />
+          </Suspense>
+        </div>
+      </AuthWrapper>
     </HydrationBoundary>
   );
 }
