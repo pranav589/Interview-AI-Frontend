@@ -5,7 +5,6 @@ import LandingPage from "@/components/landing/landing-page";
 export default async function Home() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
-  console.log({accessToken})
 
 
   if (accessToken) {
