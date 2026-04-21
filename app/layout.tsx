@@ -56,8 +56,6 @@ import { ReactQueryProvider } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FeatureFlagsProvider } from "@/lib/feature-flags-context";
 import { getQueryClient } from "@/lib/react-query";
-import { prefetchFeatureFlags } from "@/lib/api-server";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 import Script from "next/script";
 
@@ -66,12 +64,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const queryClient = getQueryClient();
-  // Pre-fetch Feature Flags (Independent of user session)
-  await prefetchFeatureFlags(queryClient);
-
-  const dehydratedState = dehydrate(queryClient);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <Script
@@ -82,26 +74,24 @@ export default async function RootLayout({
       />
       <body className="font-sans antialiased">
         <ReactQueryProvider>
-          <HydrationBoundary state={dehydratedState}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <FeatureFlagsProvider>
-                <AuthProvider>
-                  <a
-                    href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:font-bold"
-                  >
-                    Skip to main content
-                  </a>
-                  {children}
-                </AuthProvider>
-              </FeatureFlagsProvider>
-            </ThemeProvider>
-          </HydrationBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <FeatureFlagsProvider>
+              <AuthProvider>
+                <a
+                  href="#main-content"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:font-bold"
+                >
+                  Skip to main content
+                </a>
+                {children}
+              </AuthProvider>
+            </FeatureFlagsProvider>
+          </ThemeProvider>
         </ReactQueryProvider>
       </body>
     </html>
