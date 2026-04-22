@@ -36,7 +36,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, serverSessionHint }: { children: React.ReactNode, serverSessionHint?: boolean }) {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   const hasSessionHint = isClient 
     ? isLocalStorageLoggedIn
-    : false;
+    : !!serverSessionHint;
 
   const { data: user, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ['auth-user'],
@@ -94,9 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const isLoading = isClient && isLocalStorageLoggedIn && !user 
-    ? true 
-    : queryLoading && hasSessionHint;
+  const isLoading = (!isClient && serverSessionHint) || isAuthCallback 
+    ? queryLoading 
+    : (isClient && isLocalStorageLoggedIn && !user) 
+      ? true 
+      : queryLoading;
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });
