@@ -66,7 +66,6 @@ export default async function RootLayout({
 }>) {
   const queryClient = getQueryClient();
 
-  // Pre-fetch user — this runs on the server with the token from middleware
   const userPromise = queryClient.prefetchQuery({
     queryKey: ["auth-user"],
     queryFn: async () => {
@@ -85,7 +84,6 @@ export default async function RootLayout({
     },
   });
 
-  // Pre-fetch feature flags
   const flagsPromise = queryClient.prefetchQuery({
     queryKey: ["feature-flags"],
     queryFn: async () => {
@@ -98,8 +96,7 @@ export default async function RootLayout({
     },
   });
 
-  // Run in parallel
-  await Promise.all([userPromise, flagsPromise]);
+  await userPromise;
 
   return (
     <html lang="en" suppressHydrationWarning>
