@@ -26,7 +26,7 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("accessToken")?.value;
   const refreshToken = req.cookies.get("refreshToken")?.value;
 
-  console.log(`[Middleware] Path: ${pathname}, AccessToken: ${accessToken ? "Present" : "Missing"}, RefreshToken: ${refreshToken ? "Present" : "Missing"}`);
+  console.log(`[Middleware] Path: ${pathname}, Authed: ${accessToken ? "Yes" : "No"}`);
 
   let isAuthenticated = false;
   let isExpired = false;
@@ -36,8 +36,6 @@ export async function proxy(req: NextRequest) {
       await jwtVerify(accessToken, JWT_SECRET);
       isAuthenticated = true;
     } catch (err: any) {
-      console.log(`[Middleware] Token Verification Failed: ${err.code || err.message}`);
-      // ERR_JWT_EXPIRED means a valid token that just ran out
       if (err.code === "ERR_JWT_EXPIRED") {
         isExpired = true;
       }
@@ -46,15 +44,13 @@ export async function proxy(req: NextRequest) {
 
   // Trigger refresh if token is expired OR missing but we have a refresh token
   if (!isAuthenticated && refreshToken && isProtectedPath(pathname)) {
-    console.log(`[Middleware] Redirecting to refresh API for: ${pathname}`);
     const refreshUrl = new URL("/api/refresh", req.url);
     refreshUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(refreshUrl);
   }
 
-  // Truly unauthenticated (no valid access token and no refresh token) -> send to login
+  // Truly unauthenticated -> send to login
   if (!isAuthenticated && isProtectedPath(pathname)) {
-    console.log(`[Middleware] No valid tokens for protected path. Redirecting to signin.`);
     const loginUrl = new URL("/auth/signin", req.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
