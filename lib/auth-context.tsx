@@ -36,11 +36,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children, serverSessionHint }: { children: React.ReactNode, serverSessionHint?: boolean }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   
-  // Mutations
   const loginMutation = useLogin();
   const logoutMutation = useLogout();
   const signupMutation = useSignup();
@@ -57,21 +56,14 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
     setIsClient(true);
   }, []);
 
-  // Use serverSessionHint during SSR to perfectly match HTML. 
-  // Switch to localStorage after hydration to support token updates across tabs or faster client navigation.
   const isLocalStorageLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('is-logged-in') === 'true' : false;
   
-  const hasSessionHint = isClient 
-    ? isLocalStorageLoggedIn
-    : !!serverSessionHint;
-
-  const { data: user, isLoading: queryLoading, isFetching } = useQuery({
+  const { data: user, isLoading: queryLoading } = useQuery({
     queryKey: ['auth-user'],
     queryFn: async () => {
       try {
         const response = await api.get<{ user: any }>('user/me');
         if (response.user) {
-          // Sync hint to localStorage if we successfully got a user
           if (typeof window !== 'undefined') localStorage.setItem('is-logged-in', 'true');
           return {
             ...response.user,
@@ -81,7 +73,6 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
         if (typeof window !== 'undefined') localStorage.removeItem('is-logged-in');
         return null;
       } catch (err: any) {
-        // Silently return null for 401s
         if (err.response?.status === 401) {
           if (typeof window !== 'undefined') localStorage.removeItem('is-logged-in');
           return null;
@@ -89,18 +80,12 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
         throw err;
       }
     },
-    enabled: hasSessionHint || isAuthCallback,
+    enabled: isClient && (isLocalStorageLoggedIn || isAuthCallback),
     retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  // A final loading state that covers all transition phases
-  const isLoading = !isClient 
-    ? !!serverSessionHint // Server-side: loading if we think we might have a session
-    : (hasSessionHint && !user && queryLoading) // Client-side: waiting for initial fetch
-      || (isClient && hasSessionHint && !user) // Client-side: hasn't fetched yet but probably should
-      || isAuthCallback;
-
+  const isLoading = isClient && isLocalStorageLoggedIn && !user ? true : queryLoading;
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });
