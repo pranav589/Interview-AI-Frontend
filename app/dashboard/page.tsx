@@ -2,6 +2,9 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import { Navbar } from "@/components/common/navbar";
 import AuthWrapper from "@/components/auth/auth-wrapper";
+import { getQueryClient } from "@/lib/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardStats } from "@/components/dashboard/dashboard-stats";
@@ -19,33 +22,79 @@ export const metadata: Metadata = {
   description: "View your interview history and performance trends.",
 };
 
-export default function Dashboard() {
+export default async function Dashboard() {
+  const queryClient = getQueryClient();
+
+  // 1. Pre-fetch Auth User (likely already in cache from layout, but good to ensure)
+  const userData = await queryClient.fetchQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{ user: any }>("user/me");
+        return response?.user || null;
+      } catch (error) {
+        return null;
+      }
+    },
+  });
+
+  const userId = userData?.id || userData?._id;
+
+  // 2. Pre-fetch Dashboard specific data in parallel (Initiate but don't await to allow streaming)
+  queryClient.prefetchQuery({
+    queryKey: ["interview-stats", userId],
+    queryFn: async () => {
+      const response = await api.get<{ data: any }>("interview/stats");
+      return response.data;
+    },
+  });
+  
+  queryClient.prefetchQuery({
+    queryKey: ["interviews", { page: 1, limit: 5, type: undefined, difficulty: undefined }],
+    queryFn: async () => {
+      const response = await api.get<{ data: any; pagination: any }>("interview", { 
+        params: { page: 1, limit: 5 } 
+      });
+      return response;
+    },
+  });
+  
+  queryClient.prefetchQuery({
+    queryKey: ["score-history", userId],
+    queryFn: async () => {
+      const response = await api.get<{ data: any }>("interview/score-history");
+      return response.data;
+    },
+  });
+
   return (
-    <AuthWrapper>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main id="main-content" className="px-4 py-8 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <DashboardHeader />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <AuthWrapper>
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main id="main-content" className="px-4 py-8 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+              <DashboardHeader />
 
-            <Suspense fallback={<StatsSkeleton />}>
-              <DashboardStats />
-            </Suspense>
+              <Suspense fallback={<StatsSkeleton />}>
+                <DashboardStats />
+              </Suspense>
 
-            <Suspense fallback={<ChartsSkeleton />}>
-              <DashboardCharts />
-            </Suspense>
+              <Suspense fallback={<ChartsSkeleton />}>
+                <DashboardCharts />
+              </Suspense>
 
-            <Suspense fallback={<InterviewsListSkeleton />}>
-              <RecentInterviewsList />
-            </Suspense>
+              <Suspense fallback={<InterviewsListSkeleton />}>
+                <RecentInterviewsList />
+              </Suspense>
 
-            <Suspense fallback={null}>
-              <DashboardOnboarding />
-            </Suspense>
-          </div>
-        </main>
-      </div>
-    </AuthWrapper>
+              <Suspense fallback={null}>
+                <DashboardOnboarding />
+              </Suspense>
+            </div>
+          </main>
+        </div>
+      </AuthWrapper>
+    </HydrationBoundary>
   );
 }

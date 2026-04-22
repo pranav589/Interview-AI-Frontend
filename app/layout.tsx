@@ -2,6 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
+import Script from "next/script";
+import { ReactQueryProvider } from "@/components/providers";
+import { ThemeProvider } from "@/components/theme-provider";
+import { FeatureFlagsProvider } from "@/lib/feature-flags-context";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { getQueryClient } from "@/lib/react-query";
+import { api } from "@/lib/api";
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -52,16 +59,48 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-import { ReactQueryProvider } from "@/components/providers";
-import { ThemeProvider } from "@/components/theme-provider";
-import { FeatureFlagsProvider } from "@/lib/feature-flags-context";
-import Script from "next/script";
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const queryClient = getQueryClient();
+
+  // Pre-fetch user — this runs on the server with the token from middleware
+  const userPromise = queryClient.prefetchQuery({
+    queryKey: ["auth-user"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{ user: any }>("user/me");
+        if (response?.user) {
+          return {
+            ...response.user,
+            avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
+          };
+        }
+        return null;
+      } catch (error) {
+        return null;
+      }
+    },
+  });
+
+  // Pre-fetch feature flags
+  const flagsPromise = queryClient.prefetchQuery({
+    queryKey: ["feature-flags"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{ success: boolean; data: any }>("/config/features");
+        return response.data || {};
+      } catch (error) {
+        return {};
+      }
+    },
+  });
+
+  // Run in parallel
+  await Promise.all([userPromise, flagsPromise]);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <Script
@@ -72,6 +111,7 @@ export default async function RootLayout({
       />
       <body className="font-sans antialiased">
         <ReactQueryProvider>
+          <HydrationBoundary state={dehydrate(queryClient)}>
             <ThemeProvider
               attribute="class"
               defaultTheme="system"
@@ -90,6 +130,7 @@ export default async function RootLayout({
                 </AuthProvider>
               </FeatureFlagsProvider>
             </ThemeProvider>
+          </HydrationBoundary>
         </ReactQueryProvider>
       </body>
     </html>

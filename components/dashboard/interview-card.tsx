@@ -123,7 +123,9 @@ export default function InterviewCard({ interview }: InterviewCardProps) {
             <div className="flex gap-6 text-sm text-muted-foreground justify-between md:justify-normal w-full">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                {new Date(interview.createdAt).toLocaleDateString()}
+                <span suppressHydrationWarning>
+                    {new Date(interview.createdAt).toLocaleDateString()}
+                </span>
               </div>
               {interview.status === "completed" && (
                 <div className="flex items-center gap-1">
