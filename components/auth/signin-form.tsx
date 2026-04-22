@@ -38,7 +38,7 @@ export default function SigninForm() {
         return;
       }
       toast.success(MESSAGES.AUTH.SIGNIN_SUCCESS);
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
     },
     onError: (err: any) => {
       const msg = err.message || MESSAGES.AUTH.SIGNIN_FAILED;
