@@ -94,11 +94,13 @@ export function AuthProvider({ children, serverSessionHint }: { children: React.
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const isLoading = (!isClient && serverSessionHint) || isAuthCallback 
-    ? queryLoading 
-    : (isClient && isLocalStorageLoggedIn && !user) 
-      ? true 
-      : queryLoading;
+  // A final loading state that covers all transition phases
+  const isLoading = !isClient 
+    ? !!serverSessionHint // Server-side: loading if we think we might have a session
+    : (hasSessionHint && !user && queryLoading) // Client-side: waiting for initial fetch
+      || (isClient && hasSessionHint && !user) // Client-side: hasn't fetched yet but probably should
+      || isAuthCallback;
+
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });
