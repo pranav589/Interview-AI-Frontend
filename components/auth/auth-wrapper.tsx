@@ -1,10 +1,10 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Navbar } from '@/components/common/navbar';
+import { useRouter } from 'next/navigation';
 
 interface AuthWrapperProps {
     children: React.ReactNode;
@@ -12,8 +12,8 @@ interface AuthWrapperProps {
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { isLoggedIn, isLoading, isClient } = useAuth();
-    const router = useRouter();
     const [showLoading, setShowLoading] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         let timer: NodeJS.Timeout;
@@ -38,7 +38,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
         if (isClient && !isLoading && !isLoggedIn) {
             router.push('/auth/signin');
         }
-    }, [isClient, isLoading, isLoggedIn, router]);
+    }, [isClient, isLoading, isLoggedIn]);
 
     if (isLoading && showLoading) {
         return (

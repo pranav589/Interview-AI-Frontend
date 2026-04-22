@@ -86,13 +86,11 @@ export default async function RootLayout({
 
   //  Pre-fetch remaining data Feature Flags
   // We only fetch if we have a token or have successfully seeded user data
-  if (hasToken || userDataHeader) {
-    await Promise.allSettled([
-      // If userDataHeader was missing, try a fallback fetch
-      !userDataHeader ? prefetchAuthUser(queryClient) : Promise.resolve(),
-      prefetchFeatureFlags(queryClient),
-    ]);
-  }
+  await Promise.allSettled([
+    // If userDataHeader was missing, try a fallback fetch
+    !userDataHeader && hasToken ? prefetchAuthUser(queryClient) : Promise.resolve(),
+    prefetchFeatureFlags(queryClient),
+  ]);
 
   const dehydratedState = dehydrate(queryClient);
 

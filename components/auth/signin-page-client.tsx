@@ -13,7 +13,7 @@ export default function SigninPageClient() {
     if (!isLoading && isLoggedIn) {
       router.push('/dashboard');
     }
-  }, [isLoggedIn, isLoading, router]);
+  }, [isLoggedIn, isLoading]);
 
   if (isLoading) {
     return (
