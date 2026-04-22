@@ -7,22 +7,36 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 /**
  * Helper to safely get auth headers on the server without breaking the client bundle.
  */
-async function getServerCookieHeader() {
-  if (!isServer) return "";
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!isServer) return {};
   try {
     // Dynamically import to prevent the client-side bundler from failing
     const { cookies, headers } = await import("next/headers");
     const headerList = await headers();
-    const mwToken = headerList.get("x-middleware-access-token");
+    
+    // Check for the Token Bridge header injected by middleware
+    const mwToken = headerList.get("x-access-token");
 
     if (mwToken) {
-      return `accessToken=${mwToken}`;
+      return { Authorization: `Bearer ${mwToken}` };
     }
 
+    // Fallback: Check cookies directly (works because domain is shared)
     const cookieStore = await cookies();
-    return cookieStore.toString();
+    const accessToken = cookieStore.get("accessToken")?.value;
+    if (accessToken) {
+      return { Authorization: `Bearer ${accessToken}` };
+    }
+
+    // Secondary fallback: raw cookie string
+    const cookieString = cookieStore.toString();
+    if (cookieString) {
+      return { Cookie: cookieString };
+    }
+
+    return {};
   } catch (e) {
-    return "";
+    return {};
   }
 }
 
@@ -39,13 +53,13 @@ export const api = {
         ? url
         : `${API_URL}${url.startsWith("/") ? url.slice(1) : url}`;
       try {
-        const cookieHeader = await getServerCookieHeader();
+        const authHeaders = await getAuthHeaders();
         const res = await fetch(fullUrl, {
           method: "GET",
           ...config,
           headers: {
             ...(config?.headers || {}),
-            Cookie: cookieHeader,
+            ...authHeaders,
           },
         });
 
@@ -76,13 +90,13 @@ export const api = {
         ? url
         : `${API_URL}${url.startsWith("/") ? url.slice(1) : url}`;
       try {
-        const cookieHeader = await getServerCookieHeader();
+        const authHeaders = await getAuthHeaders();
         const res = await fetch(fullUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...(config?.headers || {}),
-            Cookie: cookieHeader,
+            ...authHeaders,
           },
           body: JSON.stringify(data),
           ...config,
@@ -106,13 +120,13 @@ export const api = {
         ? url
         : `${API_URL}${url.startsWith("/") ? url.slice(1) : url}`;
       try {
-        const cookieHeader = await getServerCookieHeader();
+        const authHeaders = await getAuthHeaders();
         const res = await fetch(fullUrl, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             ...(config?.headers || {}),
-            Cookie: cookieHeader,
+            ...authHeaders,
           },
           body: JSON.stringify(data),
           ...config,
@@ -136,13 +150,13 @@ export const api = {
         ? url
         : `${API_URL}${url.startsWith("/") ? url.slice(1) : url}`;
       try {
-        const cookieHeader = await getServerCookieHeader();
+        const authHeaders = await getAuthHeaders();
         const res = await fetch(fullUrl, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             ...(config?.headers || {}),
-            Cookie: cookieHeader,
+            ...authHeaders,
           },
           body: JSON.stringify(data),
           ...config,
@@ -165,13 +179,13 @@ export const api = {
         ? url
         : `${API_URL}${url.startsWith("/") ? url.slice(1) : url}`;
       try {
-        const cookieHeader = await getServerCookieHeader();
+        const authHeaders = await getAuthHeaders();
         const res = await fetch(fullUrl, {
           method: "DELETE",
           ...config,
           headers: {
             ...(config?.headers || {}),
-            Cookie: cookieHeader,
+            ...authHeaders,
           },
         });
         if (res.status === 401) return { data: null } as any;

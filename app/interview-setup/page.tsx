@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import InterviewSetupPage from '@/components/interview/interview-setup-page';
 import { getQueryClient } from '@/lib/react-query';
-import { apiServer, prefetchAuthUser } from '@/lib/api-server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 
 export const metadata: Metadata = {
