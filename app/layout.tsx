@@ -56,6 +56,9 @@ import { ReactQueryProvider } from "@/components/providers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FeatureFlagsProvider } from "@/lib/feature-flags-context";
 import { getQueryClient } from "@/lib/react-query";
+import { prefetchAuthUser, prefetchFeatureFlags } from "@/lib/api-server";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { cookies, headers } from "next/headers";
 
 import Script from "next/script";
 
@@ -64,6 +67,33 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const queryClient = getQueryClient();
+  const cookieStore = await cookies();
+  const headerList = await headers();
+
+  const hasToken = cookieStore.get("accessToken");
+  const userDataHeader = headerList.get("x-user-data");
+
+  //  Seed User Data from Middleware Header (Optimized)
+  if (userDataHeader) {
+    try {
+      const decodedUser = JSON.parse(decodeURIComponent(atob(userDataHeader)));
+      queryClient.setQueryData(["auth-user"], decodedUser);
+    } catch (e) {
+      console.error("[Layout] Failed to parse user data from header");
+    }
+  }
+
+  //  Pre-fetch remaining data Feature Flags
+  // We only fetch if we have a token or have successfully seeded user data
+  await Promise.allSettled([
+    // If userDataHeader was missing, try a fallback fetch
+    !userDataHeader && hasToken ? prefetchAuthUser(queryClient) : Promise.resolve(),
+    prefetchFeatureFlags(queryClient),
+  ]);
+
+  const dehydratedState = dehydrate(queryClient);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <Script
@@ -74,24 +104,28 @@ export default async function RootLayout({
       />
       <body className="font-sans antialiased">
         <ReactQueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <FeatureFlagsProvider>
-              <AuthProvider>
-                <a
-                  href="#main-content"
-                  className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:font-bold"
+          <HydrationBoundary state={dehydratedState}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <FeatureFlagsProvider>
+                <AuthProvider
+                  serverSessionHint={!!(hasToken || userDataHeader)}
                 >
-                  Skip to main content
-                </a>
-                {children}
-              </AuthProvider>
-            </FeatureFlagsProvider>
-          </ThemeProvider>
+                  <a
+                    href="#main-content"
+                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:font-bold"
+                  >
+                    Skip to main content
+                  </a>
+                  {children}
+                </AuthProvider>
+              </FeatureFlagsProvider>
+            </ThemeProvider>
+          </HydrationBoundary>
         </ReactQueryProvider>
       </body>
     </html>
