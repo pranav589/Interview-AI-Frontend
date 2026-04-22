@@ -31,23 +31,32 @@ export async function proxy(request: NextRequest) {
 
   if (accessToken || refreshToken) {
     try {
-        // We make a lightweight call to /user/me to get user info.
-        // The browser's cookies are forwarded by apiServer/fetch in the background
-        // because they are now same-site.
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1/";
-        const userRes = await fetch(`${API_URL}user/me`, {
+        // Use the absolute URL from env, or fallback to localhost
+        let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1/";
+        
+        // Ensure the URL is absolute for the server-side fetch
+        if (apiUrl.startsWith('/')) {
+            const origin = request.nextUrl.origin;
+            apiUrl = `${origin}${apiUrl}`;
+        }
+
+        const userRes = await fetch(`${apiUrl}user/me`, {
           headers: {
-            'Cookie': request.cookies.toString()
+            'Cookie': request.headers.get('cookie') || ""
           }
         });
 
         if (userRes.ok) {
           const { user } = await userRes.json();
+          console.log(`[Proxy] Seeding user data for: ${user.email}`);
           // Inject user data into a header so RootLayout can read it instantly
           const userData = btoa(encodeURIComponent(JSON.stringify(user)));
           response.headers.set('x-user-data', userData);
+        } else {
+          console.warn(`[Proxy] Failed to fetch user: ${userRes.status}`);
         }
-    } catch (e) {
+    } catch (e: any) {
+        console.error(`[Proxy] Error: ${e.message}`);
         // Silently fail, client-side AuthProvider will handle it
     }
   }
