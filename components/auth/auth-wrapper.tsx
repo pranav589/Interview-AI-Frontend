@@ -35,8 +35,18 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }, [isLoading]);
 
     useEffect(() => {
+        // Only redirect if:
+        // 1. We are on the client
+        // 2. Auth is NOT loading and user is NOT logged in
+        // 3. IMPORTANT: We are NOT currently re-fetching (which could be the background refresh)
         if (isClient && !isLoading && !isLoggedIn) {
-            router.push('/auth/signin');
+            // Check if we are on a protected path before redirecting
+            // (AuthWrapper is usually only used on protected pages, but good to be safe)
+            const isAuthPath = window.location.pathname.startsWith('/auth');
+            if (!isAuthPath) {
+                console.log('[AuthWrapper] No session found. Redirecting to signin.');
+                router.push('/auth/signin');
+            }
         }
     }, [isClient, isLoading, isLoggedIn]);
 

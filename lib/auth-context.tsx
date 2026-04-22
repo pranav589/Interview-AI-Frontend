@@ -38,7 +38,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
-  const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
   
   const loginMutation = useLogin();
   const logoutMutation = useLogout();
@@ -49,43 +49,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setup2FAMutation = useSetup2FA();
   const verify2FAMutation = useVerify2FA();
 
-  const isAuthCallback = pathname === '/auth/callback';
-  const [isClient, setIsClient] = useState(false);
-  
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const isLocalStorageLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('is-logged-in') === 'true' : false;
-  
+  // useQuery will automatically use the hydrated state from HydrationBoundary in layout.tsx
   const { data: user, isLoading: queryLoading } = useQuery({
     queryKey: ['auth-user'],
     queryFn: async () => {
       try {
         const response = await api.get<{ user: any }>('user/me');
-        if (response.user) {
-          if (typeof window !== 'undefined') localStorage.setItem('is-logged-in', 'true');
+        if (response?.user) {
           return {
             ...response.user,
             avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
           } as User;
         }
-        if (typeof window !== 'undefined') localStorage.removeItem('is-logged-in');
         return null;
       } catch (err: any) {
         if (err.response?.status === 401) {
-          if (typeof window !== 'undefined') localStorage.removeItem('is-logged-in');
           return null;
         }
         throw err;
       }
     },
-    enabled: isClient && (isLocalStorageLoggedIn || isAuthCallback),
-    retry: false,
+    // We keep it enabled always. If SSR hydrated it, it won't fetch until staleTime.
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
-
-  const isLoading = isClient && isLocalStorageLoggedIn && !user ? true : queryLoading;
 
   const login = useCallback(async (email: string, password: string, twoFactorCode?: string) => {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });
@@ -126,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user: user || null,
     isLoggedIn: !!user,
-    isLoading,
+    isLoading: queryLoading, // useQuery correctly handles server-side hydrated state
     login,
     signup,
     logout,
