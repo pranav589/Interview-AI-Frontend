@@ -7,6 +7,7 @@ import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     return {
       title: `Interview Analysis: ${interview.position || "Untitled Session"}`,
-      description: `Analysis and feedback for interview on ${new Date(interview.createdAt).toLocaleDateString()}.`,
+      description: `Analysis and feedback for interview on ${formatDate(interview.createdAt)}.`,
     };
   } catch (error) {
     return { title: "Interview Details" };

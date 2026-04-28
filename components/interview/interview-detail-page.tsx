@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { SUBSCRIPTION_TIERS } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@/lib/utils";
 
 const TranscriptViewer = dynamic(() => import("./transcript-viewer"), {
   loading: () => <Skeleton className="h-64 w-full rounded-xl" />,
@@ -115,7 +116,7 @@ export default function InterviewDetailPage({
               {interview.jobTitle || "Software Engineer"}
             </p>
             <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
-              <span>{new Date(interview.createdAt).toLocaleDateString()}</span>
+              <span>{formatDate(interview.createdAt)}</span>
               <span>{interview.actualDuration} minutes</span>
               <span>{interview.difficultyLevel}</span>
             </div>
@@ -431,7 +432,7 @@ export default function InterviewDetailPage({
                 id: `t-${i}`,
                 speaker: t.role === "human" ? "user" : "ai",
                 text: t.text,
-                timestamp: new Date(t.timestamp).getTime(),
+                // timestamp: new Date(t.timestamp).getTime(),
               }))}
             />
           </motion.div>

@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { FileUp, User, Download, Trash2 } from 'lucide-react';
 import ResumeUploadModal from './resume-upload-modal';
 import { MESSAGES } from '@/lib/constants';
+import { formatDate } from '@/lib/utils';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -164,7 +165,7 @@ export default function ProfilePage() {
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">{user.resume.filename}</h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                              Uploaded on {new Date(user.resume.uploadedAt).toLocaleDateString()}
+                              Uploaded on {formatDate(user.resume.uploadedAt)}
                             </p>
 
                             {/* Extracted Data */}
