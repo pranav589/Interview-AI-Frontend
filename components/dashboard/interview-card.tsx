@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Calendar, Clock, Eye, Play } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 interface InterviewCardProps {
   interview: Interview;
@@ -123,9 +124,7 @@ export default function InterviewCard({ interview }: InterviewCardProps) {
             <div className="flex gap-6 text-sm text-muted-foreground justify-between md:justify-normal w-full">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                <span suppressHydrationWarning>
-                    {new Date(interview.createdAt).toLocaleDateString()}
-                </span>
+                <span>{formatDate(interview.createdAt)}</span>
               </div>
               {interview.status === "completed" && (
                 <div className="flex items-center gap-1">

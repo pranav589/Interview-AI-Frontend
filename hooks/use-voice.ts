@@ -1,13 +1,19 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 
-export const useVoice = () => {
+export const useVoice = (options: { isMuted?: boolean } = {}) => {
   const recorder = useRef<any>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const isCancelledRef = useRef<boolean>(false);
+  const isMutedRef = useRef<boolean>(options.isMuted || false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const lastVoiceTimeRef = useRef<number>(0);
+  const lastSilenceSendAtRef = useRef<number>(0);
   const [volume, setVolume] = useState(0);
+
+  useEffect(() => {
+    isMutedRef.current = options.isMuted || false;
+  }, [options.isMuted]);
 
   const startRecording = useCallback(async (socket: WebSocket | null) => {
     if (typeof window === "undefined") return;
@@ -85,14 +91,26 @@ export const useVoice = () => {
         numberOfAudioChannels: 1,
         bufferSize: 4096,
         ondataavailable: async (blob: Blob) => {
-          // Check if there was any voice activity recently (within lead-out buffer)
-          // Since timeSlice is 500ms, a chunk might start 500ms ago.
-          // We allow 300ms of lead-out after last detected voice.
+          const THINKING_PAUSE_MS = 6000;
+          const SILENCE_SEND_INTERVAL_MS = 1000;
+
           const now = Date.now();
           const timeSinceLastVoice = now - lastVoiceTimeRef.current;
-          
-          if (timeSinceLastVoice > 550) { // 250ms chunk duration + 300ms lead-out
-            return;
+
+          // Keepalive policy:
+          // - If the user spoke recently, stream normally.
+          // - If the user is in a short thinking pause (<= 6s), keep streaming at a low rate so
+          //   AssemblyAI doesn't finalize the turn just because audio stopped flowing.
+          // - If silence is longer than the thinking window, stop streaming to save bandwidth.
+          if (timeSinceLastVoice > THINKING_PAUSE_MS) return;
+
+          const isSilenceKeepalive = timeSinceLastVoice > 800; // treat as "pause" after 0.8s
+          if (isSilenceKeepalive) {
+            const sinceLastSilenceSend = now - lastSilenceSendAtRef.current;
+            if (sinceLastSilenceSend < SILENCE_SEND_INTERVAL_MS) {
+              return;
+            }
+            lastSilenceSendAtRef.current = now;
           }
 
           const reader = new FileReader();
@@ -105,7 +123,8 @@ export const useVoice = () => {
               if (
                 base64data &&
                 socket &&
-                socket.readyState === WebSocket.OPEN
+                socket.readyState === WebSocket.OPEN &&
+                !isMutedRef.current
               ) {
                 socket.send(
                   JSON.stringify({ type: "audio", chunk: base64data }),
@@ -143,6 +162,7 @@ export const useVoice = () => {
         audioContextRef.current = null;
       }
       analyserRef.current = null;
+      lastSilenceSendAtRef.current = 0;
     } catch (err) {
       console.error("Error stopping recorder:", err);
     }
