@@ -78,7 +78,7 @@ export interface TranscriptMessage {
   id: string;
   speaker: "user" | "ai";
   text: string;
-  timestamp: number;
+  timestamp?: number;
   audioUrl?: string;
 }
 

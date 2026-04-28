@@ -110,11 +110,13 @@ function InterviewRoomContent() {
 
   const ws = useRef<WebSocket | null>(null);
   const threadId = useRef<string>(id || "");
-  const { startRecording, stopRecording, volume } = useVoice();
+  const { startRecording, stopRecording, volume } = useVoice({
+    isMuted: isMuted || aiState === "speaking",
+  });
   const isSpeakingRef = useRef(false);
   const isInterviewActiveRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const speechQueueRef = useRef<string[]>([]);
+  const speechQueueRef = useRef<{ text: string; url: string }[]>([]);
   const isProcessingQueueRef = useRef(false);
 
   useEffect(() => {
@@ -146,17 +148,28 @@ function InterviewRoomContent() {
     return () => clearInterval(timer);
   }, [isInterviewActive, isPaused, interviewData?.duration]);
 
-  const handleTimeUp = () => {
-    setIsInterviewActive(false);
+  const waitForAISpeech = async () => {
+    // Small buffer to allow any pending speech to initialize
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    while (
+      isProcessingQueueRef.current ||
+      isSpeakingRef.current ||
+      speechQueueRef.current.length > 0
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  };
+
+  const handleTimeUp = async () => {
     isInterviewActiveRef.current = false;
+    stopRecording();
+    await waitForAISpeech();
+
+    setIsInterviewActive(false);
     ws.current?.close();
     ws.current = null;
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-    }
+
     setAiState("idle");
-    stopRecording();
     setShowTimeUpModal(true);
   };
 
@@ -195,25 +208,41 @@ function InterviewRoomContent() {
     if (!isFeatureEnabled("tts_enabled")) {
       speechQueueRef.current = [];
       setAiState("listening");
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({ type: "speech_finished" }));
+      }
       return;
     }
 
-    if (isProcessingQueueRef.current || speechQueueRef.current.length === 0) {
+    if (isProcessingQueueRef.current) return;
+    if (speechQueueRef.current.length === 0) {
+      setAiState("listening");
       return;
     }
 
     isProcessingQueueRef.current = true;
 
     while (speechQueueRef.current.length > 0) {
-      const text = speechQueueRef.current.shift();
-      if (!text) continue;
+      const item = speechQueueRef.current[0]; // Peek
+      if (!item) break;
+
+      // Ensure this item has an audio object
+      if (!(item as any).audio) {
+        (item as any).audio = new Audio(item.url);
+        (item as any).audio.preload = "auto";
+      }
+
+      const audio = (item as any).audio as HTMLAudioElement;
+      currentAudioRef.current = audio;
+
+      // Start pre-loading the NEXT chunk immediately
+      const nextItem = speechQueueRef.current[1];
+      if (nextItem && !(nextItem as any).audio) {
+        (nextItem as any).audio = new Audio(nextItem.url);
+        (nextItem as any).audio.preload = "auto";
+      }
 
       await new Promise<void>((resolve) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-        const ttsUrl = `${baseUrl}/tts?text=${encodeURIComponent(text)}`;
-        const audio = new Audio(ttsUrl);
-        currentAudioRef.current = audio;
-
         audio.onplay = () => {
           isSpeakingRef.current = true;
           setAiState("speaking");
@@ -222,6 +251,7 @@ function InterviewRoomContent() {
         audio.onended = () => {
           isSpeakingRef.current = false;
           currentAudioRef.current = null;
+          speechQueueRef.current.shift(); // Remove after completion
           resolve();
         };
 
@@ -229,6 +259,7 @@ function InterviewRoomContent() {
           console.error("TTS Audio Error:", e);
           isSpeakingRef.current = false;
           currentAudioRef.current = null;
+          speechQueueRef.current.shift();
           resolve();
         };
 
@@ -237,6 +268,8 @@ function InterviewRoomContent() {
             console.error("Audio Playback Failed:", err);
           }
           isSpeakingRef.current = false;
+          currentAudioRef.current = null;
+          speechQueueRef.current.shift();
           resolve();
         });
       });
@@ -244,10 +277,41 @@ function InterviewRoomContent() {
 
     isProcessingQueueRef.current = false;
     setAiState("listening");
+
+    // Signal potential backend mic-lock to release
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ type: "speech_finished" }));
+    }
   };
 
   const speakText = (text: string) => {
-    speechQueueRef.current.push(text);
+    // Strip markdown for cleaner TTS
+    const cleanText = text
+      .replace(/\*\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/#{1,6}\s/g, "")
+      .replace(/`{1,3}/g, "")
+      .trim();
+
+    if (!cleanText) return Promise.resolve();
+
+    // Split into sentences for lower perceived latency
+    const sentences = cleanText.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) || [
+      cleanText,
+    ];
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
+      "http://localhost:3001/api/v1";
+
+    sentences.forEach((s) => {
+      const trimmed = s.trim();
+      if (trimmed) {
+        const ttsUrl = `${baseUrl}/tts?text=${encodeURIComponent(trimmed)}`;
+        speechQueueRef.current.push({ text: trimmed, url: ttsUrl });
+      }
+    });
+
     processSpeechQueue();
     return Promise.resolve();
   };
@@ -301,6 +365,8 @@ function InterviewRoomContent() {
       speechQueueRef.current = [];
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
+        currentAudioRef.current.src = ""; // Force stop download
+        currentAudioRef.current = null;
       }
       stopRecording();
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -403,7 +469,11 @@ function InterviewRoomContent() {
       socket.onmessage = async (e) => {
         const data = JSON.parse(e.data);
         if (data.type === "text") {
-          setIsCodingMode(false);
+          // RESPECT the backend's decision on coding mode instead of forcing it false
+          if (data.isCodingMode !== undefined) {
+            setIsCodingMode(!!data.isCodingMode);
+          }
+
           setAiState("thinking");
           setMessages((prev) => [
             ...prev,
@@ -420,7 +490,10 @@ function InterviewRoomContent() {
                 text: MESSAGES.INTERVIEW_ROOM.COMPLETE,
               },
             ]);
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            // Wait for AI to finish speaking before showing complete modal
+            await waitForAISpeech();
+
             setIsInterviewActive(false);
             isInterviewActiveRef.current = false;
             stopRecording();
@@ -434,7 +507,10 @@ function InterviewRoomContent() {
         } else if (data.type === "coding_question") {
           setIsCodingMode(true);
           setCurrentLanguage(data.language || "javascript");
-          setCode(data.initialCode || "");
+          // Only update code if it's explicitly provided and non-empty
+          if (data.initialCode) {
+            setCode(data.initialCode);
+          }
           setAiState("thinking");
 
           setMessages((prev) => [
@@ -447,13 +523,16 @@ function InterviewRoomContent() {
           ]);
           await speakText(data.questionText);
         } else if (data.type === "user_text") {
-          setAiState("thinking");
+          // The backend may wait (silence-gate) before invoking the AI.
+          // Keep UI in listening state until we actually receive the AI response.
+          setAiState("listening");
           setPartialTranscript("");
           setMessages((prev) => [
             ...prev,
             { id: `user-${Date.now()}`, speaker: "user", text: data.content },
           ]);
         } else if (data.type === "partial_text") {
+          setAiState("listening");
           setPartialTranscript(data.content);
         } else if (data.type === "paused") {
           toast.info("Interview paused");
@@ -500,8 +579,11 @@ function InterviewRoomContent() {
           speechQueueRef.current = [];
           if (currentAudioRef.current) {
             currentAudioRef.current.pause();
+            currentAudioRef.current.src = "";
             currentAudioRef.current = null;
           }
+          isProcessingQueueRef.current = false;
+          isSpeakingRef.current = false;
           stopRecording();
           setShowDisconnectModal(true);
         }
@@ -529,8 +611,11 @@ function InterviewRoomContent() {
     speechQueueRef.current = [];
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
+      currentAudioRef.current.src = "";
       currentAudioRef.current = null;
     }
+    isProcessingQueueRef.current = false;
+    isSpeakingRef.current = false;
     stopRecording();
     setIsVideoEnabled(false);
     setIsMuted(true);

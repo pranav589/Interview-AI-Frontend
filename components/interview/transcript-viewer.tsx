@@ -54,9 +54,9 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
                   <span className="font-semibold text-sm">
                     {message.speaker === 'ai' ? 'AI Interviewer' : 'You'}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  {/* <span className="text-xs text-muted-foreground">
                     {Math.floor(message.timestamp / 60)}m {message.timestamp % 60}s
-                  </span>
+                  </span> */}
                 </div>
 
                 <motion.div
