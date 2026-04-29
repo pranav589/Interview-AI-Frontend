@@ -70,11 +70,11 @@ export default async function RootLayout({
     queryKey: ["auth-user"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ user: any }>("user/me");
-        if (response?.user) {
+        const response = await api.get<{ data: any }>("user/me");
+        if (response?.data) {
           return {
-            ...response.user,
-            avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
+            ...response.data,
+            avatar: response.data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.data.id}`
           };
         }
         return null;
@@ -88,7 +88,7 @@ export default async function RootLayout({
     queryKey: ["feature-flags"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ success: boolean; data: any }>("/config/features");
+        const response = await api.get<{ data: any }>("/config/features");
         return response.data || {};
       } catch (error) {
         return {};
