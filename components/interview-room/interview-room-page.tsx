@@ -295,10 +295,7 @@ function InterviewRoomContent() {
 
     if (!cleanText) return Promise.resolve();
 
-    // Split into sentences for lower perceived latency
-    const sentences = cleanText.match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) || [
-      cleanText,
-    ];
+    const sentences = cleanText.match(/[^.!?]+[.!?]*\s*/g) || [cleanText];
 
     const baseUrl =
       process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
@@ -325,10 +322,13 @@ function InterviewRoomContent() {
       id: string;
       actualDuration: number;
     }) =>
-      await api.post<{ data: { feedbackSummary: string } }>("interview/feedback", {
-        threadId: id,
-        actualDuration,
-      }),
+      await api.post<{ data: { feedbackSummary: string } }>(
+        "interview/feedback",
+        {
+          threadId: id,
+          actualDuration,
+        },
+      ),
     onSuccess: (
       response: any,
       variables: { id: string; actualDuration: number },
@@ -411,7 +411,9 @@ function InterviewRoomContent() {
         },
       ]);
 
-      const response = await api.post<{ data: { ticket: string } }>("auth/ws-ticket");
+      const response = await api.post<{ data: { ticket: string } }>(
+        "auth/ws-ticket",
+      );
       const ticket = response.data.ticket;
 
       setMessages((prev) => [
