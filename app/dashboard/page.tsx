@@ -25,13 +25,13 @@ export const metadata: Metadata = {
 export default async function Dashboard() {
   const queryClient = getQueryClient();
 
-  // 1. Pre-fetch Auth User (likely already in cache from layout, but good to ensure)
+  // Pre-fetch Auth User
   const userData = await queryClient.fetchQuery({
     queryKey: ["auth-user"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ user: any }>("user/me");
-        return response?.user || null;
+        const response = await api.get<{ data: any }>("user/me");
+        return response?.data || null;
       } catch (error) {
         return null;
       }
@@ -40,7 +40,7 @@ export default async function Dashboard() {
 
   const userId = userData?.id || userData?._id;
 
-  // 2. Pre-fetch Dashboard specific data in parallel (Initiate but don't await to allow streaming)
+  // Pre-fetch Dashboard specific data in parallel
   queryClient.prefetchQuery({
     queryKey: ["interview-stats", userId],
     queryFn: async () => {
@@ -48,17 +48,20 @@ export default async function Dashboard() {
       return response.data;
     },
   });
-  
+
   queryClient.prefetchQuery({
-    queryKey: ["interviews", { page: 1, limit: 5, type: undefined, difficulty: undefined }],
+    queryKey: [
+      "interviews",
+      { page: 1, limit: 5, type: undefined, difficulty: undefined },
+    ],
     queryFn: async () => {
-      const response = await api.get<{ data: any; pagination: any }>("interview", { 
-        params: { page: 1, limit: 5 } 
+      const response = await api.get<{ data: any }>("interview", {
+        params: { page: 1, limit: 5 },
       });
-      return response;
+      return response.data;
     },
   });
-  
+
   queryClient.prefetchQuery({
     queryKey: ["score-history", userId],
     queryFn: async () => {

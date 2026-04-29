@@ -32,7 +32,7 @@ export function RecentInterviewsList() {
     difficulty: difficulty !== "all" ? difficulty : undefined,
   });
 
-  const interviews = interviewsResponse?.data;
+  const interviews = interviewsResponse?.interviews;
   const pagination = interviewsResponse?.pagination;
 
   return (

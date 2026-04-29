@@ -9,8 +9,8 @@ export const useInterviews = (params?: { page?: number; limit?: number; type?: s
   return useQuery({
     queryKey: ["interviews", params],
     queryFn: async () => {
-      const response = await api.get<{ data: Interview[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>("interview", { params });
-      return response;
+      const response = await api.get<{ data: { interviews: Interview[]; pagination: { total: number; page: number; limit: number; totalPages: number } } }>("interview", { params });
+      return response.data;
     },
     placeholderData: (previousData) => previousData,
   });
@@ -20,8 +20,8 @@ export const useSuspenseInterviews = (params?: { page?: number; limit?: number; 
   return useSuspenseQuery({
     queryKey: ["interviews", params],
     queryFn: async () => {
-      const response = await api.get<{ data: Interview[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>("interview", { params });
-      return response;
+      const response = await api.get<{ data: { interviews: Interview[]; pagination: { total: number; page: number; limit: number; totalPages: number } } }>("interview", { params });
+      return response.data;
     },
   });
 };
@@ -82,11 +82,13 @@ export const useCreateInterview = () => {
   return useMutation({
     mutationFn: async (data: any) => {
       const response = await api.post<{
-        message: string;
-        interviewId: string;
-        data: Interview;
+        data: {
+          interviewId: string;
+          interview: Interview;
+          updatedCredits: number;
+        };
       }>("interview", data);
-      return response;
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["interviews"] });

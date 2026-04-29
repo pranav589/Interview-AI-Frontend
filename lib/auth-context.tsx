@@ -58,11 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryKey: ['auth-user'],
     queryFn: async () => {
       try {
-        const response = await api.get<{ user: any }>('user/me');
-        if (response?.user) {
+        const response = await api.get<{ data: any }>('user/me');
+        const userData = response?.data;
+        if (userData) {
           return {
-            ...response.user,
-            avatar: response.user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.user.id}`
+            ...userData,
+            avatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.id || userData._id}`
           } as User;
         }
         return null;

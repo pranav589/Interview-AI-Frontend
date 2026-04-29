@@ -20,7 +20,7 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
   const { data: flagsData, isLoading } = useQuery({
     queryKey: ['feature-flags'],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; data: FeatureFlags }>('/config/features');
+      const response = await api.get<{ data: FeatureFlags }>('/config/features');
       return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

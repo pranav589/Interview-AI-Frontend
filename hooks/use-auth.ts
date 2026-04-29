@@ -9,10 +9,12 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: async (data: { email: string; password: string; twoFactorCode?: string }) => {
-      return await api.post<any>("auth/login", data);
+      const response = await api.post<any>("auth/login", data);
+      return response;
     },
     onSuccess: (response) => {
-      if (!response.twoFactorRequired) {
+      const data = response?.data;
+      if (data && !data.twoFactorRequired) {
         localStorage.setItem('is-logged-in', 'true');
         queryClient.invalidateQueries({ queryKey: ["auth-user"] });
         toast.success(MESSAGES.AUTH.SIGNIN_SUCCESS);
@@ -106,7 +108,8 @@ export const useResetPassword = () => {
 export const useSetup2FA = () => {
   return useMutation({
     mutationFn: async () => {
-      return await api.post<{ otpAuthUrl: string }>("auth/2fa/setup");
+      const response = await api.post<{ data: { otpAuthUrl: string } }>("auth/2fa/setup");
+      return response.data;
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "2FA setup failed");
