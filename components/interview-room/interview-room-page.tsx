@@ -325,15 +325,15 @@ function InterviewRoomContent() {
       id: string;
       actualDuration: number;
     }) =>
-      await api.post<{ feedback: string }>("interview/feedback", {
+      await api.post<{ data: { feedbackSummary: string } }>("interview/feedback", {
         threadId: id,
         actualDuration,
       }),
     onSuccess: (
-      data: any,
+      response: any,
       variables: { id: string; actualDuration: number },
     ) => {
-      setFeedback(data.feedback.feedbackSummary || "No summary provided.");
+      setFeedback(response.data.feedbackSummary || "No summary provided.");
       if (variables) {
         queryClient.invalidateQueries({
           queryKey: ["interview", variables.id],
@@ -411,8 +411,8 @@ function InterviewRoomContent() {
         },
       ]);
 
-      const ticketData = await api.post<{ ticket: string }>("auth/ws-ticket");
-      const ticket = ticketData.ticket;
+      const response = await api.post<{ data: { ticket: string } }>("auth/ws-ticket");
+      const ticket = response.data.ticket;
 
       setMessages((prev) => [
         ...prev,
