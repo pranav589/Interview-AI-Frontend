@@ -44,6 +44,24 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    const excludedAuthRoutes = [
+      "auth/login",
+      "auth/register",
+      "auth/refresh-token",
+      "auth/logout",
+      "auth/forgot-password",
+      "auth/reset-password",
+    ];
+
+    const isAuthRoute = excludedAuthRoutes.some((route) =>
+      originalRequest.url?.includes(route),
+    );
+
+    // Logging for 401 diagnostic
+    console.log(
+      `[API Interceptor] 401 Unauthorized detected. URL: ${originalRequest.url}, IsAuthRoute: ${isAuthRoute}`,
+    );
+
     if (
       !originalRequest ||
       error.response?.status !== 401 ||
@@ -52,17 +70,19 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Don't refresh for login/register/refresh-token/forgot/reset routes
-    const excludedAuthRoutes = [
-      "auth/login",
-      "auth/register",
-      "auth/refresh-token",
-      "auth/forgot-password",
-      "auth/reset-password",
-    ];
-    if (
-      excludedAuthRoutes.some((route) => originalRequest.url?.includes(route))
-    ) {
+    if (isAuthRoute) {
+      console.log(
+        `[Auth] Skipping refresh for auth route: ${originalRequest.url}`,
+      );
+      return Promise.reject(error);
+    }
+
+    const hasSessionHint =
+      typeof window !== "undefined" && localStorage.getItem("is-logged-in");
+    if (!hasSessionHint) {
+      console.warn(
+        `[Auth] 401 on ${originalRequest.url} but no session hint. Skipping refresh.`,
+      );
       return Promise.reject(error);
     }
 
@@ -82,10 +102,23 @@ axiosInstance.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      console.log("[Auth] Access token expired. Attempting to refresh...");
+      // Final check right before the refresh call to catch rapid state changes
+      if (
+        typeof window !== "undefined" &&
+        !localStorage.getItem("is-logged-in")
+      ) {
+        console.warn(
+          `[Auth] Refresh aborted for ${originalRequest.url} - session hint removed.`,
+        );
+        return Promise.reject(error);
+      }
+
+      console.log(
+        `[Auth] Access token expired on ${originalRequest.url}. Attempting to refresh...`,
+      );
       await axiosInstance.post("auth/refresh-token");
       console.log(
-        "[Auth] Token refresh successful. Retrying original request.",
+        `[Auth] Token refresh successful for ${originalRequest.url}. Retrying.`,
       );
       processQueue(null);
       return axiosInstance(originalRequest);

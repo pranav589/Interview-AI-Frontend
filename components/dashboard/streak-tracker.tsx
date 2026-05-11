@@ -13,7 +13,7 @@ interface StreakTrackerProps {
 export function StreakTracker({ streak, percentile, isCompact = false }: StreakTrackerProps) {
   if (isCompact) {
     return (
-       <Card className="hover:shadow-md transition-all border-primary/5 h-full group hover:border-primary/20">
+       <Card className="transition-all border-hairline h-full group hover:bg-secondary/50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Practice Streak</CardTitle>
           <div className="p-2 bg-primary/5 rounded-lg group-hover:bg-primary/10 transition-colors">

@@ -152,7 +152,7 @@ function ResetPasswordContent() {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 font-bold shadow-lg"
+                  className="w-full h-11 font-bold"
                   disabled={resetPasswordMutation.isPending || !token}
                 >
                   {resetPasswordMutation.isPending ? 'Resetting Password...' : 'Reset Password'}

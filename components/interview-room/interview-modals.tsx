@@ -62,7 +62,7 @@ export default function InterviewModals({
                     onClick={onConfirmStop}
                     variant="destructive"
                     size="lg"
-                    className="w-full font-bold"
+                    className="w-full font-bold text-white"
                   >
                     Yes, End Session
                   </Button>
@@ -192,7 +192,7 @@ export default function InterviewModals({
                   onClick={onCloseDisconnect}
                   variant="default"
                   size="lg"
-                  className="w-full font-bold"
+                  className="w-full text-white"
                 >
                   Return to Dashboard
                 </Button>

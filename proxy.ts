@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-// JWT_ACCESS_SECRET must be set in Environment Variables (Vercel/Local .env)
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET || "JWT_ACCESS_SECRET");
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET);
 
 const PROTECTED_PATHS = [
   "/dashboard",
   "/interview",
-  "/profile", 
+  "/profile",
   "/interview-setup",
   "/interview-room",
 ];
 
 function isProtectedPath(pathname: string): boolean {
-  return PROTECTED_PATHS.some(p => pathname.startsWith(p));
+  return PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 }
 
 function isPublicAuthPath(pathname: string): boolean {
   // Auth pages (login/signup) but NOT callback
-  return pathname.startsWith("/auth") && !pathname.startsWith("/auth/callback") && !pathname.startsWith("/auth/verify-email") && !pathname.startsWith("/auth/reset-password");
+  return (
+    pathname.startsWith("/auth") &&
+    !pathname.startsWith("/auth/callback") &&
+    !pathname.startsWith("/auth/verify-email") &&
+    !pathname.startsWith("/auth/reset-password")
+  );
 }
 
 export async function proxy(req: NextRequest) {
@@ -26,7 +30,9 @@ export async function proxy(req: NextRequest) {
   const accessToken = req.cookies.get("accessToken")?.value;
   const refreshToken = req.cookies.get("refreshToken")?.value;
 
-  console.log(`[Middleware] Path: ${pathname}, Authed: ${accessToken ? "Yes" : "No"}`);
+  console.log(
+    `[Middleware] Path: ${pathname}, Authed: ${accessToken ? "Yes" : "No"}`,
+  );
 
   let isAuthenticated = false;
   let isExpired = false;
@@ -43,13 +49,18 @@ export async function proxy(req: NextRequest) {
   }
 
   // Trigger refresh if token is expired OR missing but we have a refresh token
-  if (!isAuthenticated && refreshToken && isProtectedPath(pathname)) {
+  const isAuthRoute =
+    pathname.startsWith("/api/refresh") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/api/auth");
+
+  if (!isAuthenticated && refreshToken && !isAuthRoute) {
     const refreshUrl = new URL("/api/refresh", req.url);
     refreshUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(refreshUrl);
   }
 
-  // Truly unauthenticated -> send to login
+  // Truly unauthenticated on a protected path -> send to login
   if (!isAuthenticated && isProtectedPath(pathname)) {
     const loginUrl = new URL("/auth/signin", req.url);
     loginUrl.searchParams.set("redirect", pathname);
@@ -61,12 +72,17 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // Inject token into headers for server components (Token Bridge)
-  const response = NextResponse.next();
-  if (accessToken) {
-    response.headers.set("x-access-token", accessToken);
+  // Token Bridge: Inject token into REQUEST headers for server components
+  const requestHeaders = new Headers(req.headers);
+  if (accessToken && isAuthenticated) {
+    requestHeaders.set("x-middleware-access-token", accessToken);
   }
-  return response;
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

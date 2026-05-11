@@ -81,7 +81,7 @@ export default function CameraFeed({
       className="h-full max-h-[400px]"
     >
       <Card
-        className="h-full overflow-hidden relative bg-black"
+        className="h-full overflow-hidden relative bg-muted border-hairline shadow-none rounded-3xl"
         aria-label="Your live camera feed"
       >
         {isVideoEnabled ? (
@@ -114,18 +114,18 @@ export default function CameraFeed({
         >
           {isVideoEnabled && (
             <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
+              animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="flex items-center gap-2 bg-red-500/80 text-white px-3 py-1.5 rounded-full text-sm font-medium"
+              className="flex items-center gap-2 bg-destructive text-white px-3 py-1.5 rounded-full text-xs font-semibold"
             >
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
               Recording
             </motion.div>
           )}
           {isMuted && (
-            <div className="bg-gray-800/80 text-white px-3 py-1.5 rounded-full flex items-center gap-2">
-              <MicOff className="w-4 h-4" />
-              <span className="text-sm">Muted</span>
+            <div className="bg-surface-chip-translucent backdrop-blur-md text-ink px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-semibold border border-white/20">
+              <MicOff className="w-3.5 h-3.5" />
+              <span>Muted</span>
             </div>
           )}
         </motion.div>

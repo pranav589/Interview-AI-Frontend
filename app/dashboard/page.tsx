@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { Navbar } from "@/components/common/navbar";
 import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
@@ -11,6 +10,7 @@ import { DashboardStats } from "@/components/dashboard/dashboard-stats";
 import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { RecentInterviewsList } from "@/components/dashboard/recent-interviews-list";
 import { DashboardOnboarding } from "@/components/dashboard/dashboard-onboarding";
+import { DashboardTools } from "@/components/dashboard/dashboard-tools";
 import {
   StatsSkeleton,
   ChartsSkeleton,
@@ -73,27 +73,30 @@ export default async function Dashboard() {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <AuthWrapper>
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <main id="main-content" className="px-4 py-8 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto space-y-8">
-              <DashboardHeader />
+        <div className="min-h-screen bg-canvas">
+          <main id="main-content" className="section-padding">
+            <div className="space-y-12">
+              <DashboardHeader userName={userData?.fullName} />
 
-              <Suspense fallback={<StatsSkeleton />}>
-                <DashboardStats />
-              </Suspense>
+              <div className="space-y-16">
+                <Suspense fallback={<StatsSkeleton />}>
+                  <DashboardStats />
+                </Suspense>
 
-              <Suspense fallback={<ChartsSkeleton />}>
-                <DashboardCharts />
-              </Suspense>
+                <Suspense fallback={<ChartsSkeleton />}>
+                  <DashboardCharts />
+                </Suspense>
 
-              <Suspense fallback={<InterviewsListSkeleton />}>
-                <RecentInterviewsList />
-              </Suspense>
+                <DashboardTools />
 
-              <Suspense fallback={null}>
-                <DashboardOnboarding />
-              </Suspense>
+                <Suspense fallback={<InterviewsListSkeleton />}>
+                  <RecentInterviewsList />
+                </Suspense>
+
+                <Suspense fallback={null}>
+                  <DashboardOnboarding />
+                </Suspense>
+              </div>
             </div>
           </main>
         </div>

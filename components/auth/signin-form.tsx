@@ -58,7 +58,6 @@ export default function SigninForm() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
 
       <div className="flex items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
         <motion.div
@@ -67,7 +66,7 @@ export default function SigninForm() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Card className="shadow-xl">
+          <Card className="">
             <CardHeader className="space-y-2 text-center">
               <CardTitle className="text-3xl font-bold tracking-tight">Welcome Back</CardTitle>
               <CardDescription className="text-muted-foreground text-sm">
@@ -183,7 +182,7 @@ export default function SigninForm() {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 font-bold text-base shadow-lg shadow-primary/20"
+                  className="w-full h-11  text-base  text-white"
                   disabled={loginMutation.isPending}
                 >
                   {loginMutation.isPending ? (
