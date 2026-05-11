@@ -43,71 +43,76 @@ export default function InterviewControls({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="sticky bottom-6 z-50 flex flex-wrap items-center justify-center gap-4 p-4 rounded-2xl border bg-card/80 backdrop-blur-md shadow-lg"
+      className="sticky bottom-8 z-50 flex items-center justify-center gap-3 px-6 py-3 rounded-full border border-hairline bg-parchment/80 backdrop-blur-xl shadow-none mx-auto w-fit"
     >
       <Button
-        variant={isMuted ? "destructive" : "outline"}
-        size="sm"
+        variant="ghost"
+        size="icon"
         onClick={onToggleMute}
-        className="gap-2"
+        className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
+          isMuted ? "bg-destructive text-white" : "bg-surface-chip-translucent text-ink"
+        }`}
         aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
       >
-        {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-        {isMuted ? "Unmute" : "Mute"}
+        {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
       </Button>
 
       <Button
-        variant={!isVideoEnabled ? "destructive" : "outline"}
-        size="sm"
+        variant="ghost"
+        size="icon"
         onClick={onToggleVideo}
-        className="gap-2"
+        className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
+          !isVideoEnabled ? "bg-destructive text-white" : "bg-surface-chip-translucent text-ink"
+        }`}
         aria-label={isVideoEnabled ? "Disable camera" : "Enable camera"}
       >
         {isVideoEnabled ? (
-          <Video className="w-4 h-4" />
+          <Video className="w-5 h-5" />
         ) : (
-          <VideoOff className="w-4 h-4" />
+          <VideoOff className="w-5 h-5" />
         )}
-        {isVideoEnabled ? "Camera On" : "Camera Off"}
       </Button>
 
       <Button
-        variant="outline"
-        size="sm"
+        variant="ghost"
+        size="icon"
         onClick={onTogglePause}
-        className="gap-2"
+        className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
+          isPaused ? "bg-primary text-white" : "bg-surface-chip-translucent text-ink"
+        }`}
         aria-label={isPaused ? "Resume interview" : "Pause interview"}
       >
         {isPaused ? (
-          <Play className="w-4 h-4" />
+          <Play className="w-5 h-5" />
         ) : (
-          <Pause className="w-4 h-4" />
+          <Pause className="w-5 h-5" />
         )}
-        {isPaused ? "Resume" : "Pause"}
       </Button>
 
       {isCodingEnabled && (
         <Button
-          variant={isCodingMode ? "default" : "outline"}
-          size="sm"
+          variant="ghost"
+          size="icon"
           onClick={onToggleCodingMode}
-          className="gap-2"
+          className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
+            isCodingMode ? "bg-ink text-white" : "bg-surface-chip-translucent text-ink"
+          }`}
           aria-label={isCodingMode ? "Hide code editor" : "Show code editor"}
         >
-          <Code2 className="w-4 h-4" />
-          {isCodingMode ? "Hide Editor" : "Show Editor"}
+          <Code2 className="w-5 h-5" />
         </Button>
       )}
 
+      <div className="w-px h-6 bg-hairline mx-1" />
+
       <Button
-        variant="destructive"
-        size="sm"
+        variant="ghost"
+        size="icon"
         onClick={onEndInterview}
-        className="gap-2"
+        className="w-11 h-11 rounded-full bg-destructive text-white transition-all active:scale-95"
         aria-label="End interview"
       >
-        <Square className="w-4 h-4 fill-current" />
-        End Interview
+        <Square className="w-5 h-5 fill-current" />
       </Button>
     </motion.div>
   );

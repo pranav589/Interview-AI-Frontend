@@ -73,7 +73,7 @@ export function DashboardStats() {
             >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Card className="hover:shadow-md transition-all border-primary/5 cursor-help h-full group hover:border-primary/20">
+                  <Card className="transition-all border-hairline cursor-help h-full group hover:bg-secondary/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         {stat.title}
@@ -83,10 +83,10 @@ export function DashboardStats() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold flex items-baseline gap-1">
+                      <div className="text-[34px] font-semibold tracking-tight flex items-baseline gap-1">
                         {stat.value}
                         {stat.suffix && (
-                          <span className="text-sm font-normal text-muted-foreground">
+                          <span className="text-caption font-normal text-muted-foreground">
                             {stat.suffix}
                           </span>
                         )}

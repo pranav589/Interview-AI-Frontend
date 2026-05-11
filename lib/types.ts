@@ -84,6 +84,7 @@ export interface TranscriptMessage {
 
 export interface InterviewDetail extends Interview {
   transcriptions: Transcription[];
+  activeJobId?: string | null;
 }
 
 export interface InterviewStats {
@@ -97,4 +98,19 @@ export interface InterviewStats {
     technical: number;
     confidence: number;
   };
+}
+
+export interface InterviewJob {
+  _id: string;
+  jobType: "feedback-generation";
+  status: "queued" | "processing" | "completed" | "failed";
+  error?: string;
+  resultRef?: {
+    feedbackId?: string;
+  };
+}
+
+export interface InterviewJobKickoff {
+  jobId: string;
+  status: "queued" | "processing";
 }

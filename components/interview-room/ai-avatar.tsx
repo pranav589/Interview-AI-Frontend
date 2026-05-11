@@ -25,7 +25,7 @@ export default function AIAvatar({
       className="h-full max-h-[400px]"
     >
       <Card
-        className="h-full overflow-hidden relative bg-gradient-to-br from-primary/10 to-primary/5 flex flex-col items-center justify-center"
+        className="h-full overflow-hidden relative bg-tile-1 border-hairline shadow-none rounded-3xl flex flex-col items-center justify-center"
         aria-label={`AI Interviewer visual representation - currently ${isThinking ? "thinking" : isSpeaking ? "speaking" : isListening ? "listening" : "ready"}`}
       >
         <motion.div
@@ -83,19 +83,19 @@ export default function AIAvatar({
           transition={{ delay: 0.2 }}
           className="mt-8 text-center"
         >
-          <p className="text-lg font-semibold">
+          <p className="text-body font-semibold text-ink">
             {isThinking
-              ? "🤔 Thinking..."
+              ? "Thinking..."
               : isSpeaking
-                ? "🗣️ Speaking..."
+                ? "Speaking..."
                 : isListening
-                  ? "👂 Listening..."
-                  : "📞 Ready"}
+                  ? "Listening..."
+                  : "Ready"}
           </p>
           <motion.p
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="text-sm text-muted-foreground mt-2"
+            className="text-caption text-ink-muted-80 mt-2"
           >
             {isThinking
               ? "Processing your response"

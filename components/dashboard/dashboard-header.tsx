@@ -18,17 +18,17 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
       className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6"
     >
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+        <h1 className="text-display-md font-semibold tracking-tight mb-2">
           Welcome back, {userName || "Practitioner"}!
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-ink-muted text-body">
           Continue practicing and improving your interview skills
         </p>
       </div>
       <Link href="/interview-setup">
         <Button
           size="lg"
-          className="gap-2 h-12 px-6 shadow-lg hover:shadow-primary/20"
+          className="gap-2 h-12 px-6 text-white shadow-apple-card hover:scale-[1.02] transition-transform"
         >
           <Plus className="w-5 h-5" />
           Start New Practice

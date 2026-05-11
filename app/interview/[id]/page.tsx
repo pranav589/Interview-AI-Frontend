@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { Suspense } from "react";
 import InterviewDetailPage from "@/components/interview/interview-detail-page";
 import { InterviewDetailSkeleton } from "@/components/interview/interview-detail-skeleton";
-import { Navbar } from "@/components/common/navbar";
 import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
@@ -46,11 +45,12 @@ export default async function InterviewDetail({ params }: Props) {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <AuthWrapper>
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <Suspense fallback={<InterviewDetailSkeleton />}>
-            <InterviewDetailPage interviewId={id} />
-          </Suspense>
+        <div className="min-h-screen bg-canvas">
+          <main id="main-content" className="section-padding">
+            <Suspense fallback={<InterviewDetailSkeleton />}>
+              <InterviewDetailPage interviewId={id} />
+            </Suspense>
+          </main>
         </div>
       </AuthWrapper>
     </HydrationBoundary>

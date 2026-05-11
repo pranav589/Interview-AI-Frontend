@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 import Script from "next/script";
@@ -9,9 +9,12 @@ import { FeatureFlagsProvider } from "@/lib/feature-flags-context";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient } from "@/lib/react-query";
 import { api } from "@/lib/api";
+import { NotificationProvider } from "@/lib/notification-context";
+import { Navbar } from "@/components/common/navbar";
+import { AppleFooter } from "@/components/common/apple-footer";
+import { RouteContainer } from "@/components/common/route-container";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: {
@@ -74,7 +77,9 @@ export default async function RootLayout({
         if (response?.data) {
           return {
             ...response.data,
-            avatar: response.data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.data.id}`
+            avatar:
+              response.data.avatar ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${response.data.id}`,
           };
         }
         return null;
@@ -106,7 +111,7 @@ export default async function RootLayout({
         data-site-id="gx_Z4uagFrM29mZ"
         src="https://ghostlyx.com/js/script.min.js"
       />
-      <body className="font-sans antialiased">
+      <body className={`${inter.variable} font-sans antialiased`}>
         <ReactQueryProvider>
           <HydrationBoundary state={dehydrate(queryClient)}>
             <ThemeProvider
@@ -117,13 +122,19 @@ export default async function RootLayout({
             >
               <FeatureFlagsProvider>
                 <AuthProvider>
-                  <a
-                    href="#main-content"
-                    className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-xl focus:font-bold"
-                  >
-                    Skip to main content
-                  </a>
-                  {children}
+                  <NotificationProvider>
+                    <a
+                      href="#main-content"
+                      className="sr-only focus:not-sr-only focus:fixed focus:top-14 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-full focus:font-bold"
+                    >
+                      Skip to main content
+                    </a>
+                    <Navbar />
+                    <main id="main-content" className="min-h-screen">
+                      <RouteContainer>{children}</RouteContainer>
+                    </main>
+                    <AppleFooter />
+                  </NotificationProvider>
                 </AuthProvider>
               </FeatureFlagsProvider>
             </ThemeProvider>

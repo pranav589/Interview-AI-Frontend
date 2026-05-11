@@ -1,6 +1,12 @@
 import { AxiosRequestConfig } from "axios";
 import axiosInstance from "./axiosInstance";
 
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
 const isServer = typeof window === "undefined";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -15,7 +21,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     const headerList = await headers();
     
     // Check for the Token Bridge header injected by middleware
-    const mwToken = headerList.get("x-access-token");
+    const mwToken = headerList.get("x-middleware-access-token");
 
     if (mwToken) {
       return { Authorization: `Bearer ${mwToken}` };

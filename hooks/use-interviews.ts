@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient, useSuspenseQuery } from "@tansta
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Interview, InterviewDetail, InterviewStats } from "@/lib/types";
-export type { Interview, InterviewDetail, InterviewStats };
+import { Interview, InterviewDetail, InterviewStats, InterviewJob, InterviewJobKickoff } from "@/lib/types";
+export type { Interview, InterviewDetail, InterviewStats, InterviewJob, InterviewJobKickoff };
 
 export const useInterviews = (params?: { page?: number; limit?: number; type?: string; difficulty?: string; status?: string }) => {
   return useQuery({
@@ -116,6 +116,31 @@ export const useSuspenseScoreHistory = () => {
     queryFn: async () => {
       const response = await api.get<{ data: Array<{ date: string; score: number; type: string }> }>("interview/score-history");
       return response.data;
+    },
+  });
+};
+
+export const useGenerateFeedback = () => {
+  return useMutation({
+    mutationFn: async ({ threadId, actualDuration }: { threadId: string; actualDuration: number }) => {
+      const response = await api.post<{ data: InterviewJobKickoff }>(`interview/feedback`, { threadId, actualDuration });
+      return response.data;
+    },
+  });
+};
+
+export const useInterviewJob = (jobId?: string) => {
+  return useQuery({
+    queryKey: ["interview-job", jobId],
+    enabled: Boolean(jobId),
+    queryFn: async () => {
+      const response = await api.get<{ data: InterviewJob }>(`interview/jobs/${jobId}`);
+      return response.data;
+    },
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (!status || status === "queued" || status === "processing") return 3000;
+      return false;
     },
   });
 };

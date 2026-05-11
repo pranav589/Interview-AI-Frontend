@@ -60,13 +60,13 @@ export default function InterviewCard({ interview }: InterviewCardProps) {
     interview.status === "paused" || interview.status === "in-progress";
 
   return (
-    <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+    <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+      <Card className="transition-colors cursor-pointer border-hairline hover:bg-secondary/50">
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold mb-2">{displayTitle}</h3>
-              <p className="text-sm text-muted-foreground mb-3">
+              <h3 className="text-[17px] font-semibold tracking-tight mb-2">{displayTitle}</h3>
+              <p className="text-caption text-muted-foreground mb-3">
                 {interview.company || "General"} •{" "}
                 {interview.jobTitle || "Software Engineer"}
               </p>
@@ -107,11 +107,11 @@ export default function InterviewCard({ interview }: InterviewCardProps) {
             {interview.status === "completed" && (
               <div className="flex flex-row sm:flex-col items-baseline sm:items-end gap-2 sm:gap-0">
                 <div
-                  className={`text-3xl font-bold ${getScoreColor(interview.score)}`}
+                  className={`text-[34px] font-semibold tracking-tight ${getScoreColor(interview.score)}`}
                 >
                   {interview.score}
                 </div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
                   Score
                 </p>
               </div>
@@ -139,7 +139,7 @@ export default function InterviewCard({ interview }: InterviewCardProps) {
                   <Button
                     size="sm"
                     variant="default"
-                    className="gap-2  w-full md:w-fit"
+                    className="gap-2  w-full md:w-fit text-white"
                   >
                     <Play className="w-4 h-4" />
                     Resume Interview

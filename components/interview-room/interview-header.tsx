@@ -41,46 +41,45 @@ export default function InterviewHeader({
       className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
     >
       <div>
-        <h1 className="text-3xl font-bold">Interview Session</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-display-md font-semibold tracking-apple-tight">Interview Session</h1>
+        <p className="text-body text-ink-muted-80">
           Session ID: <span className="font-mono text-xs">{id}</span>
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         {isInterviewActive && (
           <div className="flex flex-col items-end">
             <motion.div
               animate={
                 isTimeCritical
                   ? {
-                      scale: [1, 1.1, 1],
-                      color: ["#ef4444", "#ef4444", "#ef4444"],
+                      scale: [1, 1.05, 1],
                     }
-                  : { scale: [1, 1.05, 1] }
+                  : {}
               }
               transition={{ duration: 1, repeat: Infinity }}
-              className={`text-2xl font-mono font-bold ${
+              className={`text-lead font-semibold ${
                 isTimeCritical ? "text-destructive" : "text-primary"
               }`}
             >
               {formatTime(remainingTime)}
             </motion.div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+            <p className="text-[10px] text-ink-muted-48 uppercase tracking-widest font-semibold">
               {isTimeCritical ? "Time Closing In" : "Remaining Time"}
             </p>
           </div>
         )}
 
         {!isInterviewActive && hasMessages && (
-          <Button onClick={onGetFeedback} variant="outline" className="gap-2">
+          <Button onClick={onGetFeedback} variant="outline" className="rounded-full h-11 px-6 gap-2 border-hairline">
             <FileText className="w-4 h-4" /> Get AI Feedback
           </Button>
         )}
 
         {!isInterviewActive && (
           <Link href="/dashboard">
-            <Button variant="ghost">Exit</Button>
+            <Button variant="ghost" className="rounded-full h-11 px-6">Exit</Button>
           </Link>
         )}
       </div>

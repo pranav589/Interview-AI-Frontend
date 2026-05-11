@@ -31,7 +31,7 @@ export const LoadingButton = React.forwardRef<
       <Button
         ref={ref}
         disabled={disabled || isLoading}
-        className={cn("gap-2", className)}
+        className={cn('gap-2', className)}
         {...props}
       >
         {isLoading ? (

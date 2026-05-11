@@ -24,6 +24,13 @@ import { useAuth } from "@/lib/auth-context";
 import { SUBSCRIPTION_TIERS } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useInterviewJob, useGenerateFeedback } from "@/hooks/use-interviews";
+import { toast } from "sonner";
+
 
 const TranscriptViewer = dynamic(() => import("./transcript-viewer"), {
   loading: () => <Skeleton className="h-64 w-full rounded-xl" />,
@@ -41,8 +48,48 @@ export default function InterviewDetailPage({
   interviewId,
 }: InterviewDetailPageProps) {
   const { user } = useAuth();
-
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const jobIdFromUrl = searchParams.get("jobId");
   const { data: interview } = useSuspenseInterviewDetails(interviewId);
+  const [activeJobId, setActiveJobId] = useState<string | null>(jobIdFromUrl || interview?.activeJobId || null);
+  
+  const { data: job, isLoading: isJobLoading } = useInterviewJob(activeJobId || undefined);
+  const generateFeedback = useGenerateFeedback();
+
+  // If activeJobId changes in interview data (e.g. on fresh load), update state
+  useEffect(() => {
+    if (interview?.activeJobId && !activeJobId) {
+      setActiveJobId(interview.activeJobId);
+    }
+  }, [interview?.activeJobId]);
+
+  // Refetch interview details when job is completed
+  useEffect(() => {
+    if (job?.status === "completed") {
+      queryClient.invalidateQueries({ queryKey: ["interview", interviewId] });
+      toast.success("Feedback generated successfully!");
+      setActiveJobId(null);
+    }
+  }, [job?.status, interviewId, queryClient]);
+
+  const handleRetryAnalysis = () => {
+    toast.promise(
+      generateFeedback.mutateAsync({
+        threadId: interviewId,
+        actualDuration: interview.actualDuration || 0,
+      }),
+      {
+        loading: "Restarting analysis...",
+        success: (data) => {
+          setActiveJobId(data.jobId);
+          return "Analysis restarted!";
+        },
+        error: "Failed to restart analysis.",
+      }
+    );
+  };
+
 
   if (!interview) {
     return (
@@ -63,6 +110,8 @@ export default function InterviewDetailPage({
   }
 
   const feedbackData = interview.feedbackId;
+  const isProcessing = !feedbackData && (job?.status === "queued" || job?.status === "processing" || (activeJobId && !job && isJobLoading));
+  const isFailed = !feedbackData && job?.status === "failed";
 
   const iType = interview.interviewType || "interview";
   const displayTitle = interview.jobTitle
@@ -74,15 +123,14 @@ export default function InterviewDetailPage({
     communicationScore: feedbackData?.communicationScore || 0,
     technicalScore: feedbackData?.technicalScore || 0,
     confidenceScore: feedbackData?.confidenceScore || 0,
-    strengths: feedbackData?.strengths || ["Analyzing session..."],
-    areasForImprovement: feedbackData?.areasForImprovement || [
-      "Working on insights...",
-    ],
-    suggestions: feedbackData?.suggestions || ["Hang tight!"],
+    strengths: feedbackData?.strengths || [],
+    areasForImprovement: feedbackData?.areasForImprovement || [],
+    suggestions: feedbackData?.suggestions || [],
     feedbackSummary:
       feedbackData?.feedbackSummary || "Detailed feedback is being processed.",
     questions: feedbackData?.questions || [],
   };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,13 +170,79 @@ export default function InterviewDetailPage({
             </div>
           </motion.div>
 
-          {/* Overall Score */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-10 flex flex-col items-center justify-center"
-          >
+          {isProcessing ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-12"
+            >
+              <Card className="max-w-2xl mx-auto border-dashed border-primary/20 bg-primary/5">
+                <CardContent className="py-12 flex flex-col items-center text-center space-y-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                    <Loader2 className="w-12 h-12 text-primary animate-spin relative" />
+                  </div>
+                  <CardTitle className="text-2xl">Analyzing your session...</CardTitle>
+                  <CardDescription className="max-w-md text-base">
+                    Our AI is currently reviewing your performance, communication, and technical depth. This usually takes about 30-60 seconds.
+                  </CardDescription>
+                  <div className="flex gap-2 items-center text-sm text-muted-foreground pt-4">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span>Generating personalized insights...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : isFailed ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-12"
+            >
+              <Card className="max-w-2xl mx-auto border-destructive/20 bg-destructive/5">
+                <CardContent className="py-12 flex flex-col items-center text-center space-y-4">
+                  <AlertCircle className="w-12 h-12 text-destructive" />
+                  <CardTitle className="text-2xl">Analysis Failed</CardTitle>
+                  <CardDescription className="max-w-md text-base">
+                    Something went wrong while generating your feedback. Please try restarting the analysis.
+                  </CardDescription>
+                  <Button onClick={handleRetryAnalysis} variant="outline" className="mt-4 gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Retry Analysis
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : !feedbackData ? (
+             <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-12"
+            >
+              <Card className="max-w-2xl mx-auto border-dashed">
+                <CardContent className="py-12 flex flex-col items-center text-center space-y-4">
+                  <AlertCircle className="w-12 h-12 text-muted-foreground" />
+                  <CardTitle className="text-2xl">No Feedback Available</CardTitle>
+                  <CardDescription className="max-w-md text-base">
+                    Feedback has not been generated for this session yet.
+                  </CardDescription>
+                  <Button onClick={handleRetryAnalysis} className="mt-4 gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Generate Feedback
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <>
+              {/* Overall Score */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="mb-10 flex flex-col items-center justify-center"
+              >
+
             <div className="relative group">
               <svg
                 viewBox="0 0 120 120"
@@ -221,7 +335,7 @@ export default function InterviewDetailPage({
               </svg>
 
               {/* Floating badges for flavor */}
-              <div className="absolute -top-4 -right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce duration-[3000ms]">
+              <div className="absolute -top-4 -right-4 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce duration-[3000ms]">
                 {feedback.overallScore >= 80
                   ? "EXCELLENT"
                   : feedback.overallScore >= 60
@@ -420,6 +534,9 @@ export default function InterviewDetailPage({
             </motion.div>
           )}
 
+            </>
+          )}
+
           {/* Transcript */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -436,6 +553,7 @@ export default function InterviewDetailPage({
               }))}
             />
           </motion.div>
+
 
           {/* Action Buttons */}
           <motion.div
@@ -459,7 +577,7 @@ export default function InterviewDetailPage({
             >
               <Button
                 size="lg"
-                className="w-full sm:w-48 h-12 shadow-md shadow-primary/20"
+                className="w-full sm:w-48 h-12 shadow-md shadow-primary/20 text-white"
               >
                 Practice Again
               </Button>

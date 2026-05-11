@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
-import { Navbar } from "@/components/common/navbar";
 import ProfilePage from "@/components/profile/profile-page";
 import { ProfileSkeleton } from "@/components/profile/profile-skeleton";
 import AuthWrapper from "@/components/auth/auth-wrapper";
@@ -18,11 +17,12 @@ export default function Profile() {
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <AuthWrapper>
-        <div className="min-h-screen bg-background text-foreground">
-          <Navbar />
-          <Suspense fallback={<ProfileSkeleton />}>
-            <ProfilePage />
-          </Suspense>
+        <div className="min-h-screen bg-canvas">
+          <main id="main-content" className="section-padding">
+            <Suspense fallback={<ProfileSkeleton />}>
+              <ProfilePage />
+            </Suspense>
+          </main>
         </div>
       </AuthWrapper>
     </HydrationBoundary>
