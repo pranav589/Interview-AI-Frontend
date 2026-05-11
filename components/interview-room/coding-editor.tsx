@@ -24,6 +24,7 @@ import { Card } from "@/components/ui/card";
 import { useCodeRunner } from "@/hooks/use-code-runner";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "next-themes";
 
 const LANGUAGES = [
   { label: "JavaScript", value: "javascript", comingSoon: false },
@@ -47,6 +48,7 @@ export default function CodingEditor({
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { theme } = useTheme();
 
   const { execute, isRunning, isPyodideLoading } = useCodeRunner();
 
@@ -145,11 +147,11 @@ export default function CodingEditor({
         </div>
 
         {/* Editor Area */}
-        <div className="flex-1 relative bg-[#1e1e1e] min-h-[200px]">
+        <div className="flex-1 relative bg-background min-h-[200px]">
           <Editor
             height="100%"
             language={language}
-            theme="vs-dark"
+            theme={theme === "dark" ? "vs-dark" : "light"}
             value={code}
             onChange={handleEditorChange}
             options={{
@@ -194,7 +196,7 @@ export default function CodingEditor({
           </div>
 
           {/* Output Content */}
-          <div className="h-40 bg-[#1e1e1e] p-4 overflow-y-auto font-mono text-sm border-b border-primary/10 relative">
+          <div className="h-40 bg-background/50 backdrop-blur-md p-4 overflow-y-auto font-mono text-sm border-b border-primary/10 relative">
             {isRunning ? (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-primary animate-pulse">
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -207,12 +209,12 @@ export default function CodingEditor({
             ) : output || error ? (
               <div className="space-y-2">
                 {output && (
-                  <pre className="text-emerald-400 whitespace-pre-wrap selection:bg-emerald-500/20">
+                  <pre className="text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap selection:bg-emerald-500/20">
                     {output}
                   </pre>
                 )}
                 {error && (
-                  <pre className="text-rose-400 whitespace-pre-wrap bg-rose-500/5 p-2 rounded border border-rose-500/10 selection:bg-rose-500/20">
+                  <pre className="text-rose-600 dark:text-rose-400 whitespace-pre-wrap bg-rose-500/5 p-2 rounded border border-rose-500/10 selection:bg-rose-500/20">
                     {error}
                   </pre>
                 )}

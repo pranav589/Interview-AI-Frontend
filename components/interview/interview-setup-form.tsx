@@ -520,7 +520,7 @@ export default function InterviewSetupForm({
               <LoadingButton
                 onClick={handleStartInterview}
                 size="lg"
-                className="w-full h-12 text-lg font-bold shadow-xl shadow-primary/20"
+                className="w-full h-12 text-lg text-white  shadow-xl shadow-primary/20"
                 isLoading={isLoading}
                 loadingText="Setting up interview..."
               >

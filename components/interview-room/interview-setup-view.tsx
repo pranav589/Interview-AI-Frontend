@@ -165,6 +165,7 @@ export default function InterviewSetupView({
                   onClick={onRequestPermissions}
                   variant="default"
                   size="sm"
+                  className="text-white"
                 >
                   Enable Camera & Mic
                 </Button>
@@ -259,7 +260,7 @@ export default function InterviewSetupView({
                 disabled={!hasPermissions || !voiceCheckPassed}
                 loadingText={isResuming ? "Resuming..." : "Starting..."}
                 icon={<Play className="w-5 h-5 fill-current" />}
-                className="w-full shadow-lg shadow-primary/20"
+                className="w-full shadow-lg shadow-primary/20 text-white"
               >
                 {isResuming ? 'Resume Interview Session' : 'Start Interview'}
               </LoadingButton>

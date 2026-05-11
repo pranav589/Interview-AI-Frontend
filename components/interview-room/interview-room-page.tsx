@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Navbar } from "@/components/common/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,12 +11,10 @@ import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "./transcription-chat";
 import { useVoice } from "@/hooks/use-voice";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth-context";
 import { MESSAGES } from "@/lib/constants";
 import { api } from "@/lib/api";
-import { useInterviewDetails } from "@/hooks/use-interviews";
+import { useInterviewDetails, useGenerateFeedback } from "@/hooks/use-interviews";
 import { useFeatureFlags } from "@/lib/feature-flags-context";
 
 // Sub-components
@@ -50,18 +47,17 @@ export default function InterviewRoomPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+        <div className="min-h-screen bg-canvas">
+          <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-12">
             <div className="flex justify-between items-center">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-12 w-64 rounded-xl" />
+              <Skeleton className="h-12 w-32 rounded-full" />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[400px]">
-              <Skeleton className="rounded-2xl h-full" />
-              <Skeleton className="rounded-2xl h-full" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 h-[500px]">
+              <Skeleton className="rounded-lg h-full" />
+              <Skeleton className="rounded-lg h-full" />
             </div>
-            <Skeleton className="h-[400px] w-full rounded-2xl" />
+            <Skeleton className="h-[400px] w-full rounded-lg" />
           </div>
         </div>
       }
@@ -313,36 +309,33 @@ function InterviewRoomContent() {
     return Promise.resolve();
   };
 
-  const queryClient = useQueryClient();
-  const feedbackMutation = useMutation({
-    mutationFn: async ({
-      id,
-      actualDuration,
-    }: {
-      id: string;
-      actualDuration: number;
-    }) =>
-      await api.post<{ data: { feedbackSummary: string } }>(
-        "interview/feedback",
-        {
-          threadId: id,
-          actualDuration,
+  const generateFeedback = useGenerateFeedback();
+
+  const handleGetFeedbackAndRedirect = () => {
+    const interviewId = id || threadId.current;
+    if (!interviewId) return;
+
+    toast.promise(
+      generateFeedback.mutateAsync({
+        threadId: interviewId,
+        actualDuration: Math.ceil(interviewTime / 60),
+      }),
+      {
+        loading: "Starting interview analysis...",
+        success: (data) => {
+          // Redirect immediately to detail page, which will handle polling
+          const jobId = data.jobId;
+          router.push(`/interview/${interviewId}${jobId ? `?jobId=${jobId}` : ""}`);
+          return "Analysis started! You will be notified when it's ready.";
         },
-      ),
-    onSuccess: (
-      response: any,
-      variables: { id: string; actualDuration: number },
-    ) => {
-      setFeedback(response.data.feedbackSummary || "No summary provided.");
-      if (variables) {
-        queryClient.invalidateQueries({
-          queryKey: ["interview", variables.id],
-        });
-        queryClient.invalidateQueries({ queryKey: ["interviews"] });
-        queryClient.invalidateQueries({ queryKey: ["interview-stats"] });
-      }
-    },
-  });
+        error: (err) => {
+          console.error("Feedback kickoff failed:", err);
+          router.push("/dashboard");
+          return "Session ended, but analysis kickoff failed.";
+        },
+      },
+    );
+  };
 
   const handleTogglePause = () => {
     if (isPaused) {
@@ -631,26 +624,6 @@ function InterviewRoomContent() {
     handleGetFeedbackAndRedirect();
   };
 
-  const handleGetFeedbackAndRedirect = () => {
-    toast.promise(
-      feedbackMutation.mutateAsync({
-        id: id || threadId.current,
-        actualDuration: Math.ceil(interviewTime / 60),
-      }),
-      {
-        loading: "Analyzing your interview session...",
-        success: () => {
-          router.push(`/interview/${id}`);
-          return "Interview completed! Your feedback is ready.";
-        },
-        error: () => {
-          router.push("/dashboard");
-          return "Session ended, but feedback generation failed.";
-        },
-      },
-    );
-  };
-
   const handleSubmitCode = async (submittedCode: string, language: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(
@@ -687,45 +660,43 @@ function InterviewRoomContent() {
 
   if (isDetailsLoading)
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-8">
+      <div className="min-h-screen bg-canvas">
+        <div className="max-w-screen-xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-12">
           <div className="flex justify-between items-center">
-            <Skeleton className="h-10 w-64" />
-            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-12 w-64 rounded-xl" />
+            <Skeleton className="h-12 w-32 rounded-full" />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[400px]">
-            <Skeleton className="rounded-2xl h-full" />
-            <Skeleton className="rounded-2xl h-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 h-[500px]">
+            <Skeleton className="rounded-lg h-full" />
+            <Skeleton className="rounded-lg h-full" />
           </div>
-          <Skeleton className="h-[400px] w-full rounded-2xl" />
+          <Skeleton className="h-[400px] w-full rounded-lg" />
         </div>
       </div>
     );
   if (isDetailsError || (!id && !isDetailsLoading))
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
-        <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center text-destructive mb-6">
-          <AlertCircle size={32} />
+      <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-4 text-center">
+        <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center text-destructive mb-8">
+          <AlertCircle size={40} />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Interview Session Not Found</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">
+        <h1 className="display-sm mb-4">Interview Session Not Found</h1>
+        <p className="text-ink-subtle body-lg mb-10 max-w-md">
           We couldn&apos;t find the interview session you&apos;re looking for.
         </p>
         <Link href="/interview-setup">
-          <Button>Back to Setup</Button>
+          <Button size="lg" className="px-8 h-12">Back to Setup</Button>
         </Link>
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="min-h-screen bg-canvas">
       <motion.main
         id="main-content"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="px-4 py-6 sm:px-6 lg:px-8"
+        className="px-4 py-12 sm:px-6 lg:px-8"
       >
         <div className="max-w-7xl mx-auto">
           <InterviewHeader
@@ -734,12 +705,7 @@ function InterviewRoomContent() {
             id={id}
             interviewData={interviewData}
             interviewTime={interviewTime}
-            onGetFeedback={() =>
-              feedbackMutation.mutate({
-                id: threadId.current,
-                actualDuration: Math.ceil(interviewTime / 60),
-              })
-            }
+            onGetFeedback={handleGetFeedbackAndRedirect}
           />
 
           <AnimatePresence mode="wait">
@@ -886,7 +852,7 @@ function InterviewRoomContent() {
               <Button
                 size="lg"
                 onClick={handleTogglePause}
-                className="gap-2 w-full"
+                className="gap-2 w-full text-white"
               >
                 <Play className="w-5 h-5" />
                 Resume Interview

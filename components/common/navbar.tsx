@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +19,7 @@ import {
   Menu,
   LayoutDashboard,
   ShieldCheck,
-  Sparkles,
-  Zap,
+  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
@@ -32,10 +31,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { NotificationBell } from "./notification-bell";
 import { SUBSCRIPTION_TIERS, DEFAULT_FREE_CREDITS } from "@/lib/constants";
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoggedIn, logout } = useAuth();
 
   const [mounted, setMounted] = useState(false);
@@ -44,6 +45,10 @@ export function Navbar() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (pathname === "/") {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();
@@ -55,29 +60,36 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="sticky top-0 z-50 w-full h-[52px] border-b border-hairline bg-parchment/80 backdrop-blur-xl saturate-[180%] transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div className="flex justify-between items-center h-full">
           <Link
             href={isLoggedIn ? "/dashboard" : "/"}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
           >
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="text-2xl font-black bg-gradient-to-br from-primary via-primary/80 to-violet-500 bg-clip-text text-transparent tracking-tighter"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2"
             >
-              InterviewAI
+              <img
+                src="/logo.png"
+                alt="InterviewAI Logo"
+                className="w-8 h-8 object-contain"
+              />
+              <span className="text-tagline font-semibold tracking-tight text-ink">
+                InterviewAI
+              </span>
             </motion.div>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-4 min-w-[36px]">
+          <div className="flex items-center gap-2 sm:gap-6">
             {mounted ? (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="relative w-9 h-9 rounded-full hover:bg-primary/5 transition-colors"
+                className="relative w-8 h-8 rounded-full text-ink/60 hover:text-ink hover:bg-ink/5 transition-colors active:scale-95"
                 aria-label="Toggle theme"
               >
                 <AnimatePresence mode="wait" initial={false}>
@@ -89,83 +101,68 @@ export function Navbar() {
                     transition={{ duration: 0.15 }}
                   >
                     {theme === "dark" ? (
-                      <Sun className="h-[1.1rem] w-[1.1rem]" />
+                      <Sun className="h-[1rem] w-[1rem]" />
                     ) : (
-                      <Moon className="h-[1.1rem] w-[1.1rem]" />
+                      <Moon className="h-[1rem] w-[1rem]" />
                     )}
                   </motion.div>
                 </AnimatePresence>
               </Button>
             ) : (
-              <div className="w-9 h-9" />
+              <div className="w-8 h-8" />
             )}
 
             {isLoggedIn ? (
               <>
-                {/* <Link href="/interview-setup" className="hidden sm:block">
-                  <Button
-                    size="sm"
-                    className="gap-2 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span className="font-bold tracking-tight">
-                      Quick Start
-                    </span>
-                  </Button>
-                </Link> */}
                 <div className="hidden md:flex items-center gap-4">
                   <Link href="/dashboard">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="font-medium text-muted-foreground hover:text-foreground"
+                      className="text-caption text-ink/70 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
                     >
                       Dashboard
                     </Button>
                   </Link>
-                  {/* <Link href="/pricing">
-                    <Button variant="ghost" size="sm" className="font-medium text-muted-foreground hover:text-foreground">
-                      Pricing
-                    </Button>
-                  </Link> */}
 
-                  {/* Credit Indicator */}
-                  {/* {user?.subscriptionTier === SUBSCRIPTION_TIERS.FREE && (
-                    <Link href="/pricing" className="flex items-center">
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-600 hover:bg-amber-500/20 transition-all cursor-pointer">
-                        <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span className="text-xs font-bold leading-none">{user.credits}/{DEFAULT_FREE_CREDITS} Credits</span>
-                      </div>
-                    </Link>
-                  )}
-                  {user?.subscriptionTier === SUBSCRIPTION_TIERS.PRO && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-primary">
-                      <Sparkles className="w-3.5 h-3.5 fill-current" />
-                      <span className="text-xs font-bold leading-none">PRO</span>
-                    </div>
-                  )} */}
+                  <Link href="/resume">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-caption text-ink/70 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
+                    >
+                      Resume Hub
+                    </Button>
+                  </Link>
+
+                  <NotificationBell />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="rounded-full w-9 h-9 border border-primary/10"
+                        className="rounded-full w-8 h-8 border border-ink/5 text-ink/80 hover:bg-ink/5 hover:text-ink active:scale-95"
                         aria-label="User account menu"
                       >
                         <User className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuItem className="flex flex-col items-start gap-1 p-3 pointer-events-none border-b mb-1">
-                        <span className="font-bold text-sm">{user?.name}</span>
-                        <span className="text-xs text-muted-foreground truncate w-full">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-56 p-2 rounded-lg border border-hairline bg-popover/95 backdrop-blur-xl shadow-apple-card"
+                    >
+                      <div className="flex flex-col space-y-1 p-2 border-b border-hairline mb-1">
+                        <p className="text-caption-strong text-ink truncate font-medium leading-none">
+                          {user?.name}
+                        </p>
+                        <p className="text-[12px] text-ink-muted-48 truncate leading-none">
                           {user?.email}
-                        </span>
-                      </DropdownMenuItem>
+                        </p>
+                      </div>
                       <DropdownMenuItem asChild>
                         <Link
                           href="/dashboard/settings"
-                          className="cursor-pointer py-2.5"
+                          className="flex items-center py-2 px-2 text-caption text-ink/80 focus:text-ink focus:bg-ink/5 rounded-md transition-colors"
                         >
                           <Settings className="mr-2 h-4 w-4" />
                           <span>Settings & Security</span>
@@ -173,7 +170,7 @@ export function Navbar() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={handleLogout}
-                        className="text-destructive focus:bg-destructive/10 focus:text-destructive py-2.5"
+                        className="flex items-center py-2 px-2 text-caption text-destructive focus:bg-destructive/5 rounded-md transition-colors"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Logout</span>
@@ -182,64 +179,61 @@ export function Navbar() {
                   </DropdownMenu>
                 </div>
 
-                {/* Mobile Menu */}
-                <div className="md:hidden">
+                <div className="md:hidden flex items-center gap-2">
+                  <NotificationBell />
                   <Sheet>
                     <SheetTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="w-9 h-9"
+                        className="w-8 h-8 text-ink/80 hover:bg-ink/5 hover:text-ink active:scale-95"
                         aria-label="Open mobile navigation menu"
                       >
                         <Menu className="h-5 w-5" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="w-[300px] p-0">
-                      <SheetHeader className="p-6 text-left border-b bg-muted/20">
-                        <SheetTitle className="text-xl font-black bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                          InterviewAI
+                    <SheetContent
+                      side="right"
+                      className="w-[280px] p-0 border-l border-hairline bg-parchment/95 backdrop-blur-xl"
+                    >
+                      <SheetHeader className="p-6 text-left border-b border-hairline">
+                        <SheetTitle className="text-left text-ink text-tagline font-semibold tracking-tight">
+                          Navigation
                         </SheetTitle>
                       </SheetHeader>
-                      <div className="p-6 space-y-2">
-                        <div className="flex flex-col gap-1 mb-6 p-4 bg-primary/5 rounded-xl border border-primary/10">
-                          <span className="font-bold text-sm">
-                            {user?.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {user?.email}
-                          </span>
-                        </div>
-
-                        <Link href="/dashboard" className="block">
+                      <div className="flex flex-col gap-1 py-6 px-4">
+                        <Link href="/dashboard" className="w-full">
                           <Button
                             variant="ghost"
-                            className="w-full justify-start h-12 text-base font-medium gap-3"
+                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
                           >
                             <LayoutDashboard className="w-5 h-5" />
                             Dashboard
                           </Button>
                         </Link>
-                        {/* <Link href="/pricing" className="block">
-                          <Button variant="ghost" className="w-full justify-start h-12 text-base font-medium gap-3">
-                            <ShieldCheck className="w-5 h-5" />
-                            Pricing & Plans
-                          </Button>
-                        </Link> */}
-                        <Link href="/dashboard/settings" className="block">
+                        <Link href="/resume" className="w-full">
                           <Button
                             variant="ghost"
-                            className="w-full justify-start h-12 text-base font-medium gap-3"
+                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
+                          >
+                            <FileText className="w-5 h-5" />
+                            Resume Hub
+                          </Button>
+                        </Link>
+                        <Link href="/dashboard/settings" className="w-full">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
                           >
                             <ShieldCheck className="w-5 h-5" />
                             Settings & Security
                           </Button>
                         </Link>
-                        <div className="pt-4 mt-4 border-t">
+                        <div className="pt-4 mt-4 border-t border-hairline">
                           <Button
                             variant="ghost"
                             onClick={handleLogout}
-                            className="w-full justify-start h-12 text-base font-medium gap-3 text-destructive hover:bg-destructive/5"
+                            className="w-full justify-start h-12 gap-3 text-caption text-destructive hover:text-destructive hover:bg-destructive/5 active:scale-95 rounded-pill"
                           >
                             <LogOut className="w-5 h-5" />
                             Logout
@@ -251,20 +245,25 @@ export function Navbar() {
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Link href="/auth/signin">
-                  <Button variant="ghost" size="sm" className="px-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-5 text-caption text-ink/80 hover:text-ink active:scale-95 rounded-pill transition-all h-[36px]"
+                  >
                     Sign In
                   </Button>
                 </Link>
-                {/* <Link href="/auth/signup">
+                <Link href="/auth/signup">
                   <Button
+                    variant="default"
                     size="sm"
-                    className="px-4 shadow-md shadow-primary/20"
+                    className="h-[36px] px-6 text-caption bg-primary text-white hover:bg-primary/90 active:scale-95 rounded-pill transition-all font-medium"
                   >
                     Get Started
                   </Button>
-                </Link> */}
+                </Link>
               </div>
             )}
           </div>

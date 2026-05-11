@@ -1,49 +1,52 @@
-import Link from "next/link";
-import { Navbar } from "@/components/common/navbar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Mic,
-  BarChart3,
-  Brain,
-  Zap,
-  Users,
-  ArrowRight,
-} from "lucide-react";
+"use client";
 
-import { HeroContent, HeroBackground } from "./hero-content";
-import { FadeInWhenVisible, HoverCardWrapper } from "./animated-sections";
+import Link from "next/link";
+import { 
+  Mic, 
+  BarChart3, 
+  Brain, 
+  Zap, 
+  Users, 
+  ArrowRight, 
+  Settings,
+  Target,
+  Sparkles,
+  Shield,
+  MessageSquare
+} from "lucide-react";
+import { Hero2 } from "@/components/ui/hero-2-1";
+import { 
+  FadeInWhenVisible, 
+  HoverCardWrapper, 
+  ParallaxWrapper, 
+  RevealText, 
+  ScrollProgress, 
+  AnimatedConnectionLine,
+  ScaleInWhenVisible
+} from "./animated-sections";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 export default function LandingPage() {
   const steps = [
     {
       title: "Set Up Your Interview",
-      description:
-        "Choose type, difficulty, and upload your resume for a tailored experience.",
+      description: "Choose type, difficulty, and upload your resume for a tailored experience.",
       icon: Settings,
     },
     {
       title: "Practice with AI",
-      description:
-        "Engage in a real-time voice conversation with our advanced AI interviewer.",
+      description: "Engage in a real-time voice conversation with our advanced AI interviewer.",
       icon: Mic,
     },
     {
       title: "Get Detailed Feedback",
-      description:
-        "Receive per-question scoring, model answers, and specific improvement tips.",
+      description: "Receive per-question scoring, model answers, and specific improvement tips.",
       icon: Brain,
     },
     {
       title: "Track Your Progress",
-      description:
-        "Monitor your growth with a comprehensive dashboard and trend analytics.",
+      description: "Monitor your growth with a comprehensive dashboard and trend analytics.",
       icon: BarChart3,
     },
   ];
@@ -52,88 +55,85 @@ export default function LandingPage() {
     {
       icon: Mic,
       title: "Voice-Based Practice",
-      description:
-        "Conduct realistic interviews with AI using voice interactions",
+      description: "Conduct realistic interviews with AI using voice interactions that feel like the real thing.",
+      color: "from-blue-500 to-cyan-400"
     },
     {
       icon: Brain,
       title: "AI-Powered Feedback",
-      description:
-        "Get instant, detailed feedback on your performance and speaking skills",
+      description: "Get instant, detailed feedback on your performance, technical accuracy, and speaking skills.",
+      color: "from-purple-500 to-pink-500"
     },
     {
-      icon: BarChart3,
-      title: "Performance Tracking",
-      description:
-        "Track your progress with comprehensive metrics and analytics",
+      icon: Target,
+      title: "ATS Resume Analysis",
+      description: "Optimize your resume for applicant tracking systems with our built-in intelligence engine.",
+      color: "from-orange-500 to-yellow-500"
     },
     {
       icon: Zap,
-      title: "Multiple Interview Types",
-      description:
-        "Practice behavioral, technical, and system design interviews",
+      title: "Multiple Domains",
+      description: "Practice behavioral, technical, and system design interviews across all major industries.",
+      color: "from-green-500 to-emerald-400"
     },
     {
       icon: Users,
       title: "Real-World Scenarios",
-      description:
-        "Interview with diverse question sets based on real job interviews",
+      description: "Interview with diverse question sets modeled after real hiring loops at top tech firms.",
+      color: "from-red-500 to-rose-400"
     },
     {
-      icon: ArrowRight,
-      title: "Career Growth",
-      description:
-        "Improve your skills and land your dream job with confidence",
+      icon: Sparkles,
+      title: "JD Matcher",
+      description: "See how well you match specific job descriptions and get tips to close the gap.",
+      color: "from-indigo-500 to-blue-500"
     },
-  ] as const;
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
+    <div className="min-h-screen bg-black text-white selection:bg-purple-500/30 overflow-x-hidden">
+      <ScrollProgress />
+      
       {/* Hero Section */}
-      <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-        <HeroBackground />
-        <HeroContent />
-      </section>
+      <Hero2 />
 
       {/* Features Section */}
-      <section 
-        className="px-4 py-24 sm:px-6 lg:px-8 bg-muted/30"
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px', contain: 'layout paint' }}
-      >
-        <div className="max-w-7xl mx-auto">
-          <FadeInWhenVisible>
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Why Choose InterviewAI?
-              </h2>
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Comprehensive tools designed to help you succeed in your
-                interviews
-              </p>
-            </div>
-          </FadeInWhenVisible>
+      <section className="relative py-32 px-4 sm:px-6 lg:px-8 bg-black overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px] -z-10" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] -z-10" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-24">
+            <RevealText 
+              text="Engineered for Success" 
+              className="text-4xl md:text-6xl font-bold mb-6 justify-center tracking-tighter"
+            />
+            <FadeInWhenVisible delay={0.2}>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto font-light">
+                Our suite of AI tools covers every stage of your interview preparation journey.
+              </p>
+            </FadeInWhenVisible>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <FadeInWhenVisible key={`feature-${index}`} delay={index * 0.05}>
+                <FadeInWhenVisible key={index} delay={index * 0.1} direction="up">
                   <HoverCardWrapper>
-                    <Card className="h-full hover:shadow-lg transition-all duration-300 border-primary/5 hover:border-primary/20 bg-background/50 backdrop-blur-sm">
-                      <CardHeader>
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                          <Icon className="w-6 h-6 text-primary" />
-                        </div>
-                        <CardTitle>{feature.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <CardDescription className="text-base">
-                          {feature.description}
-                        </CardDescription>
-                      </CardContent>
-                    </Card>
+                    <div className="group relative h-full p-8 rounded-3xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all duration-500">
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} p-3 mb-6 shadow-lg shadow-black/20 group-hover:scale-110 transition-transform duration-500`}>
+                        <Icon className="w-full h-full text-white" />
+                      </div>
+                      <h3 className="text-2xl font-bold mb-4 tracking-tight">{feature.title}</h3>
+                      <p className="text-gray-400 leading-relaxed font-light">
+                        {feature.description}
+                      </p>
+                      
+                      {/* Decorative corner glow */}
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </HoverCardWrapper>
                 </FadeInWhenVisible>
               );
@@ -143,39 +143,34 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section 
-        className="px-4 py-24 sm:px-6 lg:px-8"
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px', contain: 'layout paint' }}
-      >
+      <section className="py-32 px-4 sm:px-6 lg:px-8 bg-black relative overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <FadeInWhenVisible>
-            <div className="text-center mb-20">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                How It Works
-              </h2>
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Get ready for your dream job in four simple steps
+          <div className="text-center mb-24">
+            <RevealText 
+              text="Your Path to the Offer" 
+              className="text-4xl md:text-6xl font-bold mb-6 justify-center tracking-tighter"
+            />
+            <FadeInWhenVisible delay={0.2}>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto font-light">
+                A structured approach to mastering the art of the interview.
               </p>
-            </div>
-          </FadeInWhenVisible>
+            </FadeInWhenVisible>
+          </div>
 
           <div className="relative">
-            {/* Connection Line (Desktop) */}
-            <div className="hidden lg:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-y-1/2" />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 relative">
+            <div className="hidden lg:block absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative z-10">
               {steps.map((step, index) => {
                 const Icon = step.icon;
                 return (
-                  <FadeInWhenVisible key={`step-${index}`} delay={index * 0.1}>
-                    <div className="bg-background border border-border p-8 rounded-2xl h-full shadow-sm hover:shadow-md transition-shadow relative z-10">
-                      <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold mb-6 mx-auto lg:mx-0">
+                  <FadeInWhenVisible key={index} delay={index * 0.15} direction="up">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center font-black text-2xl mb-8 shadow-[0_0_30px_rgba(255,255,255,0.2)]">
                         {index + 1}
                       </div>
-                      <h3 className="text-xl font-bold mb-3 text-center lg:text-left">
-                        {step.title}
-                      </h3>
-                      <p className="text-muted-foreground text-center lg:text-left">
+                      <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
+                      <p className="text-gray-400 font-light leading-relaxed">
                         {step.description}
                       </p>
                     </div>
@@ -187,103 +182,105 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section 
-        className="px-4 py-24 sm:px-6 lg:px-8"
-        style={{ contentVisibility: 'auto', containIntrinsicSize: '0 300px', contain: 'layout paint' }}
-      >
-        <FadeInWhenVisible>
-          <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/15 via-primary/5 to-transparent rounded-3xl p-12 text-center border border-primary/20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full -ml-32 -mb-32 blur-3xl" />
+      {/* Social Proof / Stats */}
+      <section className="py-24 bg-black border-y border-white/5">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { label: "Interviews Conducted", value: "50k+" },
+              { label: "Success Rate", value: "94%" },
+              { label: "AI Accuracy", value: "99.2%" },
+              { label: "User Rating", value: "4.9/5" },
+            ].map((stat, i) => (
+              <ScaleInWhenVisible key={i} delay={i * 0.1}>
+                <div className="text-center">
+                  <div className="text-4xl md:text-5xl font-black mb-2 tracking-tighter">{stat.value}</div>
+                  <div className="text-sm text-gray-500 uppercase tracking-widest font-bold">{stat.label}</div>
+                </div>
+              </ScaleInWhenVisible>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Ready to Ace Your Interview?
+      {/* Testimonial Section */}
+      <section className="py-32 px-4 bg-black overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <FadeInWhenVisible direction="none">
+            <div className="relative p-12 md:p-20 rounded-[3rem] bg-gradient-to-br from-white/[0.05] to-transparent border border-white/10 text-center">
+              <MessageSquare className="w-12 h-12 text-white/20 mx-auto mb-8" />
+              <p className="text-3xl md:text-4xl font-medium mb-12 italic leading-tight tracking-tight">
+                "InterviewAI was the single most important tool in my job search. The voice feedback helped me fix verbal tics I didn't even know I had."
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500" />
+                <div className="text-left">
+                  <div className="font-bold text-xl">Sarah Jenkins</div>
+                  <div className="text-gray-500 font-light">Software Engineer @ Google</div>
+                </div>
+              </div>
+              
+              {/* Background glow for testimonial */}
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px]" />
+            </div>
+          </FadeInWhenVisible>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-40 px-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-900/10 to-black" />
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <FadeInWhenVisible direction="up">
+            <h2 className="text-5xl md:text-7xl font-extrabold mb-8 tracking-tighter leading-tight">
+              Ready to Secure Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">Dream Career?</span>
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of professionals who have improved their interview
-              skills with InterviewAI. Start practicing today.
+            <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto font-light">
+              Don't leave your future to chance. Practice with the world's most advanced AI interviewer today.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link href="/auth/signup">
-                <Button size="lg" className="px-10 h-14 text-lg">
-                  {" "}
-                  Get Started Now{" "}
-                </Button>
+                <button className="h-16 px-12 rounded-full bg-white text-black font-bold text-xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-white/10">
+                  Get Started Free
+                </button>
               </Link>
               <Link href="/auth/signin">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-10 h-14 text-lg"
-                >
-                  {" "}
-                  View Demo{" "}
-                </Button>
+                <button className="h-16 px-12 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-white font-bold text-xl hover:scale-105 active:scale-95 transition-all hover:bg-white/10">
+                  Login to Account
+                </button>
               </Link>
             </div>
-          </div>
-        </FadeInWhenVisible>
+          </FadeInWhenVisible>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border px-4 py-12 sm:px-6 lg:px-8">
+      <footer className="py-20 px-4 bg-black border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-            <div className="flex flex-col items-center sm:items-start">
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent mb-2">
-                InterviewAI
-              </span>
-              <p className="text-muted-foreground text-sm text-center sm:text-left">
-                Empowering candidates to master their interview skills with AI.
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12">
+            <div className="text-left">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs">AI</div>
+                <span className="text-2xl font-black tracking-tighter">InterviewAI</span>
+              </div>
+              <p className="text-gray-500 font-light max-w-xs">
+                Empowering the next generation of tech talent with sophisticated AI prep tools.
               </p>
             </div>
-            <div className="flex gap-8 text-sm text-muted-foreground">
-              <Link href="#" className="hover:text-primary transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="#" className="hover:text-primary transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="#" className="hover:text-primary transition-colors">
-                Contact Us
-              </Link>
+            
+            <div className="flex gap-12 text-sm font-medium text-gray-400">
+              <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="#" className="hover:text-white transition-colors">Contact</Link>
+              <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-border/50 text-center text-sm text-muted-foreground">
-            © 2025 InterviewAI. All rights reserved.
+          <div className="mt-20 pt-8 border-t border-white/5 text-center text-xs text-gray-600 tracking-widest uppercase">
+            © 2025 INTERVIEWAI. BUILT FOR THE FUTURE.
           </div>
         </div>
       </footer>
     </div>
-  );
-}
-
-// Helper icons
-function Settings(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 0-2-2h-.44a2 2 0 0 0-2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 0-2-2h-.44a2 2 0 0 0-2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 0-2-2H2" />
-      <circle cx="12" cy="12" r="3" />
-      <path d="m19 9 1.25-1.25a2 2 0 0 0 0-2.83l-.17-.17a2 2 0 0 0-2.83 0L16 6" />
-      <path d="m14.41 10.33 3.5-3.5" />
-      <path d="m9 15-1.25 1.25a2 2 0 0 0 0 2.83l.17.17a2 2 0 0 0 2.83 0L12 18" />
-      <path d="m9.59 13.67-3.5 3.5" />
-      <path d="M15 9l1.25-1.25a2 2 0 0 1 2.83 0l.17.17a2 2 0 0 1 0 2.83L18 12" />
-      <path d="m13.67 9.59 3.5 3.5" />
-      <path d="m9 19-1.25 1.25a2 2 0 0 1-2.83 0l-.17-.17a2 2 0 0 1 0-2.83L6 16" />
-      <path d="m10.33 14.41-3.5 3.5" />
-    </svg>
   );
 }

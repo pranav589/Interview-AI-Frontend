@@ -37,12 +37,12 @@ export default function TranscriptionChat({
       transition={{ duration: 0.5 }}
       className="h-full flex flex-col"
     >
-      <Card className="flex-1 flex flex-col overflow-hidden  shadow-xl backdrop-blur-sm">
-        <CardHeader className="pb-3 border-b border-slate-800/50">
+      <Card className="flex-1 flex flex-col overflow-hidden shadow-none border-hairline bg-tile-1">
+        <CardHeader className="pb-4 border-b border-hairline">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl">Live Transcription</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-tagline font-semibold tracking-apple-tight">Live Transcription</CardTitle>
+              <CardDescription className="text-ink-muted-80">
                 Real-time conversation transcript
               </CardDescription>
             </div>
@@ -95,13 +95,13 @@ export default function TranscriptionChat({
                       )}
 
                       <div className={`flex-1 min-w-0 ${message.speaker === 'user' ? 'text-right' : ''}`}>
-                        <div className={`text-[10px] uppercase tracking-wider font-bold mb-1 opacity-50 ${message.speaker === 'ai' ? 'text-muted-foreground' : 'text-primary-foreground/70'}`}>
+                        <div className={`text-[10px] uppercase tracking-wider font-bold mb-1 opacity-50 ${message.speaker === 'ai' ? 'text-ink-muted-80' : 'text-primary'}`}>
                           {message.speaker === 'ai' ? 'Interviewer' : 'You'}
                         </div>
                         <motion.div
-                          className={`text-sm p-3 rounded-2xl break-words shadow-sm ${message.speaker === 'ai'
-                            ? 'bg-muted border border-border text-foreground rounded-tl-none'
-                            : 'bg-primary text-primary-foreground rounded-tr-none'
+                          className={`text-body text-sm! p-4 rounded-2xl break-words ${message.speaker === 'ai'
+                            ? 'bg-pearl border border-hairline text-ink rounded-tl-none'
+                            : 'bg-primary text-white rounded-tr-none'
                             }`}
                         >
                           {message.text}

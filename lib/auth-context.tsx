@@ -115,6 +115,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: ['auth-user'] });
   }, [queryClient]);
 
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('is-logged-in', 'true');
+    } else if (!queryLoading && isClient) {
+      localStorage.removeItem('is-logged-in');
+    }
+  }, [user, queryLoading, isClient]);
+
   const value: AuthContextType = {
     user: user || null,
     isLoggedIn: !!user,

@@ -8,35 +8,47 @@ export const useLogin = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { email: string; password: string; twoFactorCode?: string }) => {
+    mutationFn: async (data: {
+      email: string;
+      password: string;
+      twoFactorCode?: string;
+    }) => {
       const response = await api.post<any>("auth/login", data);
       return response;
     },
     onSuccess: (response) => {
       const data = response?.data;
       if (data && !data.twoFactorRequired) {
-        localStorage.setItem('is-logged-in', 'true');
+        localStorage.setItem("is-logged-in", "true");
         queryClient.invalidateQueries({ queryKey: ["auth-user"] });
         toast.success(MESSAGES.AUTH.SIGNIN_SUCCESS);
       }
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || MESSAGES.AUTH.SIGNIN_FAILED);
+      toast.error(
+        error?.response?.data?.message || MESSAGES.AUTH.SIGNIN_FAILED,
+      );
     },
   });
 };
 
 export const useSignup = () => {
   return useMutation({
-    mutationFn: async (data: { name: string; email: string; password: string }) => {
+    mutationFn: async (data: {
+      name: string;
+      email: string;
+      password: string;
+    }) => {
       return await api.post("auth/register", data);
     },
     onSuccess: () => {
-      localStorage.setItem('is-logged-in', 'true');
+      localStorage.setItem("is-logged-in", "true");
       toast.success(MESSAGES.AUTH.SIGNUP_SUCCESS);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || MESSAGES.AUTH.SIGNUP_FAILED);
+      toast.error(
+        error?.response?.data?.message || MESSAGES.AUTH.SIGNUP_FAILED,
+      );
     },
   });
 };
@@ -45,12 +57,14 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    onMutate: () => {
+      localStorage.removeItem("is-logged-in");
+      queryClient.cancelQueries();
+    },
     mutationFn: async () => {
       return await api.post("auth/logout");
     },
     onSuccess: () => {
-      // Clear all auth-related cache and hint
-      localStorage.removeItem('is-logged-in');
       queryClient.setQueryData(["auth-user"], null);
       queryClient.removeQueries({ queryKey: ["auth-user"] });
       toast.success(MESSAGES.AUTH.LOGOUT_SUCCESS);
@@ -72,7 +86,9 @@ export const useVerifyEmail = () => {
       toast.success("Email verified successfully!");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Email verification failed");
+      toast.error(
+        error?.response?.data?.message || "Email verification failed",
+      );
     },
   });
 };
@@ -86,7 +102,9 @@ export const useForgotPassword = () => {
       toast.success(MESSAGES.AUTH.VERIFICATION_SENT);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || MESSAGES.AUTH.ERROR_OCCURRED);
+      toast.error(
+        error?.response?.data?.message || MESSAGES.AUTH.ERROR_OCCURRED,
+      );
     },
   });
 };
@@ -100,7 +118,9 @@ export const useResetPassword = () => {
       toast.success(MESSAGES.AUTH.RESET_PASSWORD_SUCCESS);
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || MESSAGES.AUTH.RESET_PASSWORD_FAILED);
+      toast.error(
+        error?.response?.data?.message || MESSAGES.AUTH.RESET_PASSWORD_FAILED,
+      );
     },
   });
 };
@@ -108,7 +128,9 @@ export const useResetPassword = () => {
 export const useSetup2FA = () => {
   return useMutation({
     mutationFn: async () => {
-      const response = await api.post<{ data: { otpAuthUrl: string } }>("auth/2fa/setup");
+      const response = await api.post<{ data: { otpAuthUrl: string } }>(
+        "auth/2fa/setup",
+      );
       return response.data;
     },
     onError: (error: any) => {
@@ -127,7 +149,7 @@ export const useVerify2FA = () => {
     onSuccess: () => {
       // Update local cache to reflect 2FA is enabled
       queryClient.setQueryData(["auth-user"], (old: User | null) =>
-        old ? { ...old, twoFactorEnabled: true } : null
+        old ? { ...old, twoFactorEnabled: true } : null,
       );
       toast.success("2FA enabled successfully!");
     },

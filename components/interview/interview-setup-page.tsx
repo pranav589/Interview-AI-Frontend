@@ -1,6 +1,5 @@
 'use client';
 
-import { Navbar } from '@/components/common/navbar';
 import InterviewSetupForm, { InterviewConfig } from '@/components/interview/interview-setup-form';
 import { useCreateInterview } from '@/hooks/use-interviews';
 import { useRouter } from 'next/navigation';
@@ -25,14 +24,15 @@ export default function InterviewSetupPage() {
 
   return (
     <AuthWrapper>
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <InterviewSetupForm 
-            onStartInterview={handleStartInterview} 
-            isLoading={createInterview.isPending}
-          />
-        </div>
+      <div className="min-h-screen bg-canvas">
+        <main id="main-content" className="section-padding">
+          <div className="max-w-screen-xl mx-auto">
+            <InterviewSetupForm 
+              onStartInterview={handleStartInterview} 
+              isLoading={createInterview.isPending}
+            />
+          </div>
+        </main>
       </div>
     </AuthWrapper>
   );

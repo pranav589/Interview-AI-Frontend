@@ -55,7 +55,6 @@ export default function SignupForm() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
 
       <div className="flex items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
         <motion.div
@@ -64,7 +63,7 @@ export default function SignupForm() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          <Card className="shadow-2xl">
+          <Card className="">
             <CardHeader className="space-y-1 text-center">
               <CardTitle className="text-3xl font-extrabold tracking-tight">Create Account</CardTitle>
               <CardDescription className="text-muted-foreground text-sm">
@@ -92,7 +91,7 @@ export default function SignupForm() {
                     </div>
                     <div className="pt-4 flex flex-col gap-3">
                       <Link href="/auth/signin">
-                        <Button className="w-full h-11 gap-2 font-bold shadow-lg shadow-primary/20">
+                        <Button className="w-full h-11 gap-2 font-bold">
                           Go to Sign In <ArrowRight className="w-4 h-4" />
                         </Button>
                       </Link>
@@ -186,7 +185,7 @@ export default function SignupForm() {
 
                       <Button
                         type="submit"
-                        className="w-full h-12 gap-2 mt-4 text-base font-bold shadow-xl shadow-primary/20"
+                        className="w-full h-12 gap-2 mt-4 text-white text-base font-bold"
                         disabled={signupMutation.isPending}
                       >
                         {signupMutation.isPending ? (

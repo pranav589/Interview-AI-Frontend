@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import LandingPage from "@/components/landing/landing-page";
+import TheInfiniteLandingPage from "@/components/landing/infinite-landing";
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -11,5 +11,5 @@ export default async function Home() {
     redirect("/dashboard");
   }
 
-  return <LandingPage />;
+  return <TheInfiniteLandingPage />;
 }

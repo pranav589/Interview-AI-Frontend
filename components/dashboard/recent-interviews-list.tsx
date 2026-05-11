@@ -39,8 +39,8 @@ export function RecentInterviewsList() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border pb-6">
         <div>
-          <h2 className="text-2xl font-bold">Recent Interviews</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-tagline font-semibold tracking-tight">Recent Interviews</h2>
+          <p className="text-caption text-muted-foreground">
             History and detailed feedback from your sessions
           </p>
         </div>
@@ -58,7 +58,7 @@ export function RecentInterviewsList() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-full sm:w-[140px] h-10">
+            <SelectTrigger className="w-full sm:w-[140px] h-11 rounded-full bg-secondary border-hairline">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -78,7 +78,7 @@ export function RecentInterviewsList() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-full sm:w-[140px] h-10">
+            <SelectTrigger className="w-full sm:w-[140px] h-11 rounded-full bg-secondary border-hairline">
               <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent>
