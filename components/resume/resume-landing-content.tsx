@@ -48,7 +48,7 @@ export function ResumeLandingContent() {
   return (
     <div className="w-full bg-canvas">
       <section className="relative min-h-[85vh] flex items-center border-b border-hairline overflow-hidden bg-canvas">
-        <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-20">
+        <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-12 md:py-20">
           <div className="flex flex-col justify-center space-y-8 z-10">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -65,14 +65,14 @@ export function ResumeLandingContent() {
                 <span className="text-ink/40">Intelligence.</span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-12">
+              <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-8 md:mb-12">
                 A suite of high-performance AI engines designed to transform your professional narrative. Recruiter-grade insights, ATS-optimized architecture.
               </p>
               
               <div className="flex flex-wrap gap-4 pt-4">
                 <Button 
                   size="lg" 
-                  className="rounded-pill bg-action-blue hover:bg-action-blue-hover text-white px-10 h-14 text-lg font-semibold transition-all active:scale-95 shadow-xl shadow-action-blue/20"
+                  className="rounded-pill w-full md:w-fit bg-action-blue hover:bg-action-blue-hover text-white px-10 h-14 text-lg font-semibold transition-all active:scale-95 shadow-xl shadow-action-blue/20"
                   onClick={() => document.getElementById('tools-grid')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Explore Suite
@@ -88,7 +88,7 @@ export function ResumeLandingContent() {
             </motion.div>
 
             {/* Micro Stats */}
-            <motion.div 
+            {/* <motion.div 
               className="flex flex-wrap gap-12 pt-10 border-t border-hairline max-w-lg"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -106,7 +106,7 @@ export function ResumeLandingContent() {
                 <p className="text-2xl font-semibold text-ink">2.5x</p>
                 <p className="text-[10px] text-ink/30 uppercase tracking-[0.1em] font-bold">More Interviews</p>
               </div>
-            </motion.div>
+            </motion.div> */}
           </div>
 
           <motion.div 
@@ -127,9 +127,9 @@ export function ResumeLandingContent() {
       </section>
 
       {/* SECTION 2: STUDIO SUITE (Parchment Section) - Store Grid Style */}
-      <section id="tools-grid" className="bg-canvas-parchment py-24 border-b border-hairline">
+      <section id="tools-grid" className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline">
         <div className="mx-auto px-6 lg:px-12">
-          <div className="flex flex-col lg:flex-row justify-between items-end mb-16 gap-8">
+          <div className="flex flex-col md:flex-row justify-between md:items-end mb-16 gap-8">
             <div className="max-w-2xl">
               <Badge variant="outline" className="rounded-pill px-4 py-1.5 border-action-blue/10 text-action-blue bg-action-blue/5 font-medium tracking-tight mb-6 text-xs uppercase">
                 Specialized Instruments
@@ -138,7 +138,7 @@ export function ResumeLandingContent() {
                 Tools built for <br /> every professional.
               </h2>
             </div>
-            <p className="text-lg text-ink/40 max-w-sm leading-relaxed pb-2">
+            <p className="text-lg text-ink/40 max-w-full md:max-w-sm leading-relaxed pb-2">
               High-performance engines optimized for speed, accuracy, and recruiter impact.
             </p>
           </div>
