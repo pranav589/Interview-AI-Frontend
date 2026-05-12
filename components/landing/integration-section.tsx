@@ -8,7 +8,7 @@ import { FadeInWhenVisible } from "./animated-sections";
 
 export function IntegrationSection() {
   return (
-    <section id="solutions" className="py-32 bg-foreground text-background">
+    <section id="solutions" className="py-32 bg-foreground text-background overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <FadeInWhenVisible direction="left">
