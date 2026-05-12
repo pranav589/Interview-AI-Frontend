@@ -152,7 +152,7 @@ export function ResumeLandingContent() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  className={`group relative flex flex-col bg-canvas border border-hairline rounded-lg overflow-hidden hover:border-action-blue/20 transition-all duration-500 hover:shadow-xl hover:shadow-action-blue/5 ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : ""}`}
+                  className={`group relative flex flex-col bg-canvas border border-hairline rounded-lg overflow-hidden hover:border-action-blue/20 transition-all duration-500 hover:shadow-xl hover:shadow-action-blue/5 ${tool.isComingSoon ? "cursor-not-allowed opacity-50 text-white" : ""}`}
                 >
                   <Badge variant="outline" className={`absolute right-4 top-4 rounded-pill px-4 py-1.5 border-action-blue/10 text-action-blue bg-action-blue/5 font-medium tracking-tight mb-6 text-xs uppercase ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : ""}`}>
                     {tool.isComingSoon ? "Coming Soon" : "New"}
