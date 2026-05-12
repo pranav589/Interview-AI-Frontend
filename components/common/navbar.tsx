@@ -255,7 +255,7 @@ export function Navbar() {
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/signup">
+                <Link href="/auth/signup" className="hidden sm:block">
                   <Button
                     variant="default"
                     size="sm"
