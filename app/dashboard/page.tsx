@@ -87,7 +87,7 @@ export default async function Dashboard() {
                   <DashboardCharts />
                 </Suspense>
 
-                <DashboardTools />
+                {/* <DashboardTools /> */}
 
                 <Suspense fallback={<InterviewsListSkeleton />}>
                   <RecentInterviewsList />
