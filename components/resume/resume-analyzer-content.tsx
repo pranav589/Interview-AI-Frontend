@@ -83,7 +83,7 @@ export function ResumeAnalyzerContent() {
     <div className="w-full bg-canvas">
       {/* SECTION 1: EDITORIAL HERO (Pure White) */}
       <section className="relative min-h-[85vh] flex items-center border-b border-hairline overflow-hidden bg-canvas">
-        <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-20">
+        <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-12 md:py-20">
           <div className="flex flex-col justify-center space-y-8 z-10">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -100,14 +100,14 @@ export function ResumeAnalyzerContent() {
                 <span className="text-ink/40">Master the ATS.</span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-12">
+              <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-6 md:mb-12">
                 Recruiter-grade semantic auditing for your professional narrative. Get a high-performance assessment of your resume's structural integrity.
               </p>
               
               <div className="flex flex-wrap gap-4 pt-4">
                 <Button 
                   size="lg" 
-                  className="rounded-pill px-10 h-14 text-white text-lg font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 group shadow-xl shadow-action-blue/20"
+                  className="rounded-pill w-full md:w-auto px-10 h-14 text-white text-lg font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 group shadow-xl shadow-action-blue/20"
                   onClick={() => document.getElementById('resume-selection')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   <Search className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
@@ -141,7 +141,7 @@ export function ResumeAnalyzerContent() {
       </section>
 
       {/* SECTION 2: SELECTION & HISTORY (Parchment Section) - High Density Grid */}
-      <section id="resume-selection" className="bg-canvas-parchment py-24 border-b border-hairline">
+      <section id="resume-selection" className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline">
         <div className="mx-auto px-6 lg:px-12">
           <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div className="max-w-xl">
