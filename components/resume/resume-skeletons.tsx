@@ -22,9 +22,9 @@ export function ResumeAnalyzerSkeleton() {
       <div className="bg-canvas-parchment py-24">
         <div className="mx-auto px-6 lg:px-12">
           <Skeleton className="h-10 w-64 mb-16" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {Array(4).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-[240px] rounded-[24px]" />
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {Array(5).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-[160px] rounded-xl" />
             ))}
           </div>
         </div>
@@ -204,9 +204,9 @@ export function JdMatcherSkeleton() {
       <div className="bg-canvas-parchment py-24">
         <div className="mx-auto px-6 lg:px-12">
           <Skeleton className="h-10 w-64 mb-16" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {Array(4).fill(0).map((_, i) => (
-              <Skeleton key={i} className="h-[240px] rounded-[24px]" />
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {Array(5).fill(0).map((_, i) => (
+              <Skeleton key={i} className="h-[160px] rounded-xl" />
             ))}
           </div>
         </div>
@@ -216,7 +216,7 @@ export function JdMatcherSkeleton() {
       <div className="bg-canvas py-24 border-t border-hairline">
         <div className="mx-auto px-6 lg:px-12 max-w-4xl space-y-8">
           <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-[300px] w-full rounded-[24px]" />
+          <Skeleton className="h-[300px] w-full rounded-xl" />
           <Skeleton className="h-14 w-full rounded-pill" />
         </div>
       </div>
@@ -325,8 +325,8 @@ export function ResumeLandingSkeleton() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {Array(3).fill(0).map((_, i) => (
-              <div key={i} className="p-10 bg-canvas border border-hairline rounded-[32px] space-y-8">
-                <Skeleton className="h-16 w-16 rounded-[20px]" />
+              <div key={i} className="p-10 bg-canvas border border-hairline rounded-xl space-y-8">
+                <Skeleton className="h-16 w-16 rounded-2xl" />
                 <div className="space-y-4">
                   <Skeleton className="h-8 w-3/4" />
                   <Skeleton className="h-20 w-full" />

@@ -13,7 +13,13 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { AlertCircle, FileUp, Sparkles, BookOpen, Building2 } from "lucide-react";
+import {
+  AlertCircle,
+  FileUp,
+  Sparkles,
+  BookOpen,
+  Building2,
+} from "lucide-react";
 import { FeatureFlag } from "@/components/common/feature-flag";
 import { useFeatureFlags } from "@/lib/feature-flags-context";
 import Link from "next/link";
@@ -75,6 +81,9 @@ export default function InterviewSetupForm({
   const searchParams = useSearchParams();
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+  const [accordionValue, setAccordionValue] = useState<string | undefined>(
+    undefined,
+  );
   const { isFeatureEnabled } = useFeatureFlags();
 
   const [formData, setFormData] = useState<InterviewConfig>({
@@ -90,19 +99,36 @@ export default function InterviewSetupForm({
   });
 
   useEffect(() => {
-    const type = searchParams.get("type") as any;
-    const difficulty = searchParams.get("difficulty") as any;
+    const type = searchParams.get("type");
+    const difficulty = searchParams.get("difficulty");
+    const jobTitle = searchParams.get("jobTitle");
+    const company = searchParams.get("company");
+    const jd = searchParams.get("jd");
+    const topics = searchParams.get("topics");
 
-    if (type || difficulty) {
-      setFormData((prev) => ({
-        ...prev,
-        interviewType:
-          type && INTERVIEW_TYPES.includes(type) ? type : prev.interviewType,
-        difficultyLevel:
-          difficulty && DIFFICULTY_LEVELS.includes(difficulty)
-            ? difficulty
-            : prev.difficultyLevel,
-      }));
+    if (type || difficulty || jobTitle || company || jd || topics) {
+      setFormData((prev) => {
+        const newData = { ...prev };
+
+        if (type && INTERVIEW_TYPES.some((t) => t.id === type)) {
+          newData.interviewType = type as any;
+        }
+
+        if (difficulty && DIFFICULTY_LEVELS.some((d) => d.id === difficulty)) {
+          newData.difficultyLevel = difficulty as any;
+        }
+
+        if (jobTitle) newData.jobTitle = jobTitle;
+        if (company) newData.company = company;
+        if (jd) newData.jobDescription = jd;
+        if (topics) newData.customTopics = topics;
+
+        return newData;
+      });
+
+      if (jd || topics) {
+        setAccordionValue("ai-scaling");
+      }
     }
   }, [searchParams]);
 
@@ -123,14 +149,17 @@ export default function InterviewSetupForm({
   };
 
   const handleStartInterview = () => {
-    if (isFeatureEnabled('credits_system_enabled')) {
-       if (user?.subscriptionTier === SUBSCRIPTION_TIERS.FREE && (user?.credits || 0) <= 0) {
-         setShowCreditModal(true);
-         return;
-       }
+    if (isFeatureEnabled("credits_system_enabled")) {
+      if (
+        user?.subscriptionTier === SUBSCRIPTION_TIERS.FREE &&
+        (user?.credits || 0) <= 0
+      ) {
+        setShowCreditModal(true);
+        return;
+      }
     }
 
-    if (isFeatureEnabled('resume_upload_enabled') && showResumeWarning) {
+    if (isFeatureEnabled("resume_upload_enabled") && showResumeWarning) {
       setShowResumeModal(true);
       return;
     }
@@ -212,18 +241,28 @@ export default function InterviewSetupForm({
                   {INTERVIEW_TYPES.map((type) => {
                     const isLocked =
                       user?.subscriptionTier === SUBSCRIPTION_TIERS.FREE &&
-                      type.id !== "behavioral"
+                      type.id !== "behavioral";
                     const isComingSoon = type?.isComingSoon;
-                    const flagKey = type.id === 'technical' ? 'interview_technical_enabled' : 
-                                    type.id === 'system-design' ? 'interview_system_design_enabled' : null;
+                    const flagKey =
+                      type.id === "technical"
+                        ? "interview_technical_enabled"
+                        : type.id === "system-design"
+                          ? "interview_system_design_enabled"
+                          : null;
 
                     const content = (
                       <Tooltip key={type.id}>
                         <TooltipTrigger asChild>
                           <motion.button
-                            whileHover={isLocked || isComingSoon ? {} : { scale: 1.02 }}
-                            whileTap={isLocked || isComingSoon ? {} : { scale: 0.98 }}
-                            onClick={() => handleChange("interviewType", type.id)}
+                            whileHover={
+                              isLocked || isComingSoon ? {} : { scale: 1.02 }
+                            }
+                            whileTap={
+                              isLocked || isComingSoon ? {} : { scale: 0.98 }
+                            }
+                            onClick={() =>
+                              handleChange("interviewType", type.id)
+                            }
                             className={`p-4 rounded-lg border-2 text-left transition-all relative ${
                               formData.interviewType === type.id
                                 ? "border-primary bg-primary/5"
@@ -235,9 +274,13 @@ export default function InterviewSetupForm({
                           >
                             <div className="flex justify-between items-start mb-1">
                               <p className="font-semibold">{type.label}</p>
-                              {isComingSoon && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                              {isComingSoon && (
+                                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                              )}
                             </div>
-                            <p className="text-xs text-muted-foreground">{type.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {type.description}
+                            </p>
                           </motion.button>
                         </TooltipTrigger>
                         {isComingSoon && (
@@ -377,6 +420,8 @@ export default function InterviewSetupForm({
             <Accordion
               type="single"
               collapsible
+              value={accordionValue}
+              onValueChange={setAccordionValue}
               className="w-full border-t border-border/50 pt-4"
             >
               <AccordionItem value="ai-scaling" className="border-none">
@@ -524,7 +569,7 @@ export default function InterviewSetupForm({
                 isLoading={isLoading}
                 loadingText="Setting up interview..."
               >
-                {isFeatureEnabled('resume_upload_enabled') && showResumeWarning
+                {isFeatureEnabled("resume_upload_enabled") && showResumeWarning
                   ? "Upload Resume to Continue"
                   : "Start Interview"}
               </LoadingButton>
