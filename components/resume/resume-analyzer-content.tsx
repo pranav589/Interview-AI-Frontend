@@ -203,7 +203,7 @@ export function ResumeAnalyzerContent() {
                     {resume.name}
                   </h3>
                   <p className="text-[10px] text-ink/30 font-medium">
-                    {new Date(resume.createdAt).toLocaleDateString()}
+                    {new Date(resume.updatedAt || resume.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </motion.div>

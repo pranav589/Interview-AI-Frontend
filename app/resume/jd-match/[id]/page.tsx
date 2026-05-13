@@ -34,7 +34,6 @@ export default async function JdMatchResultPage({ params }: { params: Promise<{ 
     <HydrationBoundary state={dehydrate(queryClient)}>
       <AuthWrapper>
         <div className="min-h-screen bg-background">
-          <Navbar />
           <main id="main-content">
             <Suspense fallback={<JdMatchResultSkeleton />}>
               <JdMatchResultContent />

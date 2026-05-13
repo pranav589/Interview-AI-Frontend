@@ -32,7 +32,7 @@ html {
   --input: #e0e0e0;
   --ring: #0066cc;
   --radius: 18px;
-  
+
   /* Tile surfaces - Light Mode */
   --surface-tile-1: #ffffff;
   --surface-tile-2: #f5f5f7;
@@ -40,10 +40,10 @@ html {
   --surface-black: #000000;
   --surface-pearl: #fafafc;
   --surface-chip-translucent: rgba(255, 255, 255, 0.64);
-  
+
   /* Divider */
   --divider-soft: rgba(0, 0, 0, 0.04);
-  
+
   /* Ink Colors - Light Mode */
   --ink: #1d1d1f;
   --ink-muted: #7a7a7a;
@@ -88,8 +88,9 @@ html {
 
 @theme inline {
   --font-sans: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
-  --font-display: "SF Pro Display", "Inter", system-ui, -apple-system, sans-serif;
-  
+  --font-display:
+    "SF Pro Display", "Inter", system-ui, -apple-system, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-canvas: var(--canvas);
@@ -117,13 +118,13 @@ html {
   --color-hairline: var(--border);
   --color-surface-chip-translucent: var(--surface-chip-translucent);
   --color-surface-black: #000000;
-  
+
   --radius-sm: 8px;
   --radius-md: 11px;
   --radius-lg: 18px;
   --radius-3xl: 24px;
   --radius-pill: 9999px;
-  
+
   --spacing-section: 80px;
 
   /* Typography Scale */
@@ -136,17 +137,16 @@ html {
   --text-caption: 14px;
   --text-nav-link: 12px;
   --text-fine-print: 12px;
-  
+
   --line-height-dense: 2.41;
   --line-height-body: 1.47;
-  
+
   --letter-spacing-apple-tight: -0.374px;
   --letter-spacing-apple-hero: -0.28px;
 
   --color-ink-muted-80: var(--ink-muted-80);
   --color-ink-muted-48: var(--ink-muted-48);
 }
-
 
 @layer base {
   * {
@@ -346,7 +346,45 @@ html {
   opacity: 0;
 }
 
+button {
+  cursor: pointer;
+}
 
-button{
-  cursor:  pointer;
+@layer base {
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
 }

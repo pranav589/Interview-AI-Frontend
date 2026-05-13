@@ -65,7 +65,12 @@ export function JdMatcherContent() {
       onSuccess: (res: any) => {
         toast.success("Resume uploaded!");
         const id = res?.data?.id || res?.data?._id || res?._id;
-        if (id) setSelectedResumeId(id);
+        if (id) {
+          setSelectedResumeId(id);
+          setTimeout(() => {
+            document.getElementById('jd-input')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        }
       },
       onError: (error: any) => {
         toast.error(error.message || "Upload failed");
@@ -110,7 +115,7 @@ export function JdMatcherContent() {
   return (
     <div className="w-full bg-canvas">
       <section className="relative min-h-[85vh] flex items-center border-b border-hairline overflow-hidden bg-canvas">
-        <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-20">
+        <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-12 md:py-20">
           <div className="flex flex-col justify-center space-y-8 z-10">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -125,9 +130,20 @@ export function JdMatcherContent() {
                 Align with your <br />
                 <span className="text-ink/40">dream role.</span>
               </h1>
-              <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-12">
+              <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-6 md:mb-12">
                 AI-powered resume optimization. Align your experience with job requirements for maximum ATS performance.
               </p>
+              
+              <div className="flex flex-wrap gap-4 pt-4">
+                <Button 
+                  size="lg" 
+                  className="rounded-pill w-full md:w-auto px-10 h-14 text-white text-lg font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 group shadow-xl shadow-action-blue/20"
+                  onClick={() => document.getElementById('resume-selection')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <Wand2 className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+                  Start Matching
+                </Button>
+              </div>
             </motion.div>
           </div>
 
@@ -148,48 +164,21 @@ export function JdMatcherContent() {
         </div>
       </section>
 
-      {/* Step 1: Selection (Parchment Tile) */}
-      <section className="bg-canvas-parchment py-24">
-        <div className="mx-auto section-padding">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-            <div className="max-w-[600px]">
-              <h2 className="text-4xl font-semibold tracking-[-0.02em] mb-4 text-ink">1. Select Your Base</h2>
-              <p className="text-lg text-ink-secondary">
-                Choose a resume from your vault or upload a new one to begin the optimization process.
+      <section id="resume-selection" className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline">
+        <div className="mx-auto px-6 lg:px-12">
+          <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div className="max-w-xl">
+              <h2 className="text-4xl lg:text-5xl font-semibold tracking-[-0.03em] text-ink leading-tight mb-4">
+                1. Select source material.
+              </h2>
+              <p className="text-lg text-ink/40 leading-relaxed">
+                Choose a version from your vault or upload a new PDF to begin.
               </p>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {resumes?.map((resume: any) => (
-              <motion.div
-                key={resume._id}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedResumeId(resume._id)}
-                className={`p-8 rounded-[24px] border-2 cursor-pointer transition-all duration-300 relative group flex flex-col justify-between h-[180px] ${
-                  selectedResumeId === resume._id 
-                    ? "border-action-blue bg-white shadow-xl shadow-action-blue/5" 
-                    : "border-hairline bg-white/50 hover:bg-white hover:border-action-blue/30"
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className={`p-3 rounded-xl ${selectedResumeId === resume._id ? "bg-action-blue/10 text-action-blue" : "bg-canvas text-ink-secondary"}`}>
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  {selectedResumeId === resume._id && (
-                    <div className="bg-action-blue text-white p-1 rounded-full">
-                      <CheckCircle2 className="w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-ink truncate mb-1">{resume.name}</h3>
-                  <p className="text-sm text-ink-secondary opacity-60">Last updated {new Date(resume.updatedAt).toLocaleDateString()}</p>
-                </div>
-              </motion.div>
-            ))}
-
-            <label className="p-8 rounded-[24px] border-2 border-dashed border-hairline hover:border-action-blue/50 hover:bg-white/80 cursor-pointer transition-all duration-300 flex flex-col items-center justify-center gap-4 text-center group h-[180px]">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {/* Upload Card - Compact */}
+            <label className="group relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-hairline border-dashed bg-white/50 hover:bg-white hover:border-action-blue/50 cursor-pointer transition-all duration-300 min-h-[160px]">
               <Input
                 type="file"
                 className="hidden"
@@ -197,34 +186,72 @@ export function JdMatcherContent() {
                 onChange={handleResumeUpload}
                 disabled={uploadMutation.isPending}
               />
-              <div className="p-3 rounded-xl bg-canvas group-hover:bg-action-blue/10 group-hover:text-action-blue transition-colors">
+              <div className="w-10 h-10 rounded-full bg-action-blue/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-500">
                 {uploadMutation.isPending ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin text-action-blue" />
                 ) : (
-                  <Upload className="w-6 h-6" />
+                  <Upload className="w-5 h-5 text-action-blue" />
                 )}
               </div>
-              <span className="font-semibold text-ink group-hover:text-action-blue transition-colors">Upload New</span>
+              <p className="text-sm font-semibold text-ink">Upload PDF</p>
             </label>
+
+            {/* Resume Cards - Compact */}
+            {resumes?.map((resume: any, index: number) => (
+              <motion.div
+                key={resume._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.5 }}
+                onClick={() => {
+                  setSelectedResumeId(resume._id);
+                  document.getElementById('jd-input')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                className={`group relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 min-h-[160px] ${
+                  selectedResumeId === resume._id 
+                  ? "border-action-blue bg-white shadow-xl shadow-action-blue/5" 
+                  : "border-hairline bg-white/50 hover:border-action-blue/30 hover:bg-white"
+                }`}
+              >
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                      selectedResumeId === resume._id ? "bg-action-blue text-white" : "bg-action-blue/5 text-action-blue"
+                    }`}>
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    {selectedResumeId === resume._id && (
+                      <CheckCircle2 className="w-4 h-4 text-action-blue" />
+                    )}
+                  </div>
+                  <h3 className="text-sm font-semibold text-ink line-clamp-2 leading-tight mb-1">
+                    {resume.name}
+                  </h3>
+                  <p className="text-[10px] text-ink/30 font-medium">
+                    {new Date(resume.updatedAt || resume.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Step 2: JD Input (Pure White Tile) */}
-      <section className="bg-canvas py-24">
-        <div className="mx-auto section-padding">
-          <div className="max-w-[800px] mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-semibold tracking-[-0.02em] mb-4 text-ink">2. Target Job Description</h2>
-              <p className="text-lg text-ink-secondary max-w-[600px] mx-auto">
-                Paste the text or upload the JD file. Our AI will analyze the requirements to find the perfect alignment.
-              </p>
-            </div>
+      <section id="jd-input" className="bg-canvas py-12 md:py-24 border-b border-hairline">
+        <div className="mx-auto px-6 lg:px-12">
+          <div className="mb-12">
+            <h2 className="text-4xl lg:text-5xl font-semibold tracking-[-0.03em] text-ink leading-tight mb-4">
+              2. Target Job Description
+            </h2>
+            <p className="text-lg text-ink/40 leading-relaxed max-w-2xl">
+              Paste the text or upload the JD file. Our AI will analyze the requirements to find the perfect alignment.
+            </p>
+          </div>
 
             <div className="space-y-8 bg-canvas-parchment/50 p-8 rounded-[32px] border border-hairline">
               <Textarea
                 placeholder="Paste the job description here..."
-                className="min-h-[300px] text-lg leading-relaxed bg-white border-hairline rounded-[24px] p-8 focus-visible:ring-action-blue/20 focus-visible:border-action-blue transition-all"
+                className="min-h-[300px] text-lg leading-relaxed bg-white border-hairline rounded-xl p-8 focus-visible:ring-action-blue/20 focus-visible:border-action-blue transition-all"
                 value={jdText}
                 onChange={(e) => {
                   setJdText(e.target.value);
@@ -232,39 +259,28 @@ export function JdMatcherContent() {
                 }}
               />
               
-              <div className="flex flex-col sm:flex-row items-center gap-6 pt-4 border-t border-hairline">
-                <span className="text-sm font-semibold uppercase tracking-widest text-ink-secondary opacity-40">Or upload file</span>
-                <div className="flex flex-1 items-center gap-4 w-full">
-                  <Input
-                    type="file"
-                    accept=".pdf,.docx,.txt"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setJdFile(file);
-                        setJdText("");
-                      }
-                    }}
-                    className="flex-1 bg-white border-hairline rounded-xl h-12"
-                  />
-                  {jdFile && (
-                    <Badge variant="secondary" className="bg-action-blue/10 text-action-blue border-transparent py-2 px-4 rounded-lg">
-                      {jdFile.name}
-                    </Badge>
-                  )}
-                </div>
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  className="rounded-pill border-hairline px-8 h-12 hover:bg-action-blue hover:text-white transition-all"
+                  onClick={() => document.getElementById('strategy-selection')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  disabled={!jdText && !jdFile}
+                >
+                  Continue to Strategy
+                </Button>
               </div>
             </div>
           </div>
-        </div>
       </section>
 
       {/* Step 3: Strategy & Action (Parchment Tile) */}
-      <section className="bg-canvas-parchment py-24">
-        <div className="mx-auto section-padding text-center">
-          <div className="max-w-[800px] mx-auto mb-16">
-            <h2 className="text-4xl font-semibold tracking-[-0.02em] mb-4 text-ink">3. Choose Optimization Strategy</h2>
-            <p className="text-lg text-ink-secondary">
+      <section id="strategy-selection" className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline">
+        <div className="mx-auto px-6 lg:px-12">
+          <div className="mb-16">
+            <h2 className="text-4xl lg:text-5xl font-semibold tracking-[-0.03em] text-ink leading-tight mb-4">
+              3. Choose Optimization Strategy
+            </h2>
+            <p className="text-lg text-ink/40 leading-relaxed max-w-2xl">
               Select how deep you want the AI to go in aligning your profile with the role.
             </p>
           </div>
@@ -272,35 +288,36 @@ export function JdMatcherContent() {
           <RadioGroup
             value={shouldUpdateEntireResume}
             onValueChange={setShouldUpdateEntireResume}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mb-16"
           >
             <motion.div whileTap={{ scale: 0.98 }}>
               <RadioGroupItem value="false" id="bullets" className="peer sr-only" />
               <Label
                 htmlFor="bullets"
-                className="flex flex-col items-center p-10 rounded-[32px] border-2 border-hairline bg-white cursor-pointer transition-all duration-300 peer-data-[state=checked]:border-action-blue peer-data-[state=checked]:shadow-2xl peer-data-[state=checked]:shadow-action-blue/10 group h-full"
+                className="flex flex-col items-center p-8 rounded-xl border-2 border-hairline bg-white cursor-pointer transition-all duration-300 peer-data-[state=checked]:border-action-blue peer-data-[state=checked]:shadow-2xl peer-data-[state=checked]:shadow-action-blue/10 group h-full"
               >
-                <div className="w-16 h-16 rounded-2xl bg-canvas flex items-center justify-center mb-6 group-hover:scale-110 transition-transform peer-data-[state=checked]:bg-action-blue/10 peer-data-[state=checked]:text-action-blue">
-                  <AlignLeft className="w-8 h-8" />
+                <div className="w-12 h-12 rounded-xl bg-canvas flex items-center justify-center mb-6 group-hover:scale-110 transition-transform peer-data-[state=checked]:bg-action-blue/10 peer-data-[state=checked]:text-action-blue">
+                  <AlignLeft className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-3 text-ink">Smart Bullets</h3>
-                <p className="text-ink-secondary leading-relaxed opacity-70">
+                <h3 className="text-xl font-semibold mb-2 text-ink">Smart Bullets</h3>
+                <p className="text-sm text-ink/40 leading-relaxed opacity-70 text-center">
                   Rewrites key experience points to match keywords while maintaining your structure.
                 </p>
               </Label>
             </motion.div>
-
+ 
             <motion.div whileTap={{ scale: 0.98 }}>
               <RadioGroupItem value="true" id="entire" className="peer sr-only" />
               <Label
                 htmlFor="entire"
-                className="flex flex-col items-center p-10 rounded-[32px] border-2 border-hairline bg-white cursor-pointer transition-all duration-300 peer-data-[state=checked]:border-action-blue peer-data-[state=checked]:shadow-2xl peer-data-[state=checked]:shadow-action-blue/10 group h-full"
+                className="flex cursor-not-allowed pointer-events-none opacity-50 flex-col relative items-center p-8 rounded-xl border-2 border-hairline bg-white  transition-all duration-300 peer-data-[state=checked]:border-action-blue peer-data-[state=checked]:shadow-2xl peer-data-[state=checked]:shadow-action-blue/10 group h-full"
               >
-                <div className="w-16 h-16 rounded-2xl bg-canvas flex items-center justify-center mb-6 group-hover:scale-110 transition-transform peer-data-[state=checked]:bg-action-blue/10 peer-data-[state=checked]:text-action-blue">
-                  <Sparkles className="w-8 h-8" />
+                <Badge className="absolute top-4 right-4 bg-ink/10 text-ink p-2">Coming Soon</Badge>
+                <div className="w-12 h-12 rounded-xl bg-canvas flex items-center justify-center mb-6 group-hover:scale-110 transition-transform peer-data-[state=checked]:bg-action-blue/10 peer-data-[state=checked]:text-action-blue">
+                  <Sparkles className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-3 text-ink">Total Evolution</h3>
-                <p className="text-ink-secondary leading-relaxed opacity-70">
+                <h3 className="text-xl font-semibold mb-2 text-ink">Total Evolution</h3>
+                <p className="text-sm text-ink/40 leading-relaxed opacity-70 text-center">
                   Full top-to-bottom optimization for maximum ATS score and recruiter impact.
                 </p>
               </Label>
@@ -309,7 +326,7 @@ export function JdMatcherContent() {
 
           <Button
             size="lg"
-            className="rounded-full text-white px-12 py-8 text-xl font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 group shadow-xl shadow-action-blue/20"
+            className="rounded-pill px-12 py-8 text-white text-xl font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 group shadow-xl shadow-action-blue/20"
             disabled={matchMutation.isPending}
             onClick={handleRunMatch}
           >
