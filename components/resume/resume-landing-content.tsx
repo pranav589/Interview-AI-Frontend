@@ -3,16 +3,26 @@
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Wand2, ChevronRight, ArrowRight, FileText, Layout, Zap, ShieldCheck } from "lucide-react";
+import {
+  Search,
+  Sparkles,
+  Wand2,
+  ChevronRight,
+  ArrowRight,
+  FileText,
+  Layout,
+  Zap,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
 
 export function ResumeLandingContent() {
   const tools = [
     {
       title: "Resume Analyzer",
-      description: "Get an ATS score and detailed feedback on how to improve your resume content and structure.",
+      description:
+        "Get an ATS score and detailed feedback on how to improve your resume content and structure.",
       icon: <Search className="w-6 h-6 text-action-blue" />,
       link: "/resume/analyzer",
       credits: "1 Credit",
@@ -22,26 +32,27 @@ export function ResumeLandingContent() {
     },
     {
       title: "JD Matcher",
-      description: "Align your resume with specific job descriptions. Automatically rewrite bullets to match requirements.",
+      description:
+        "Align your resume with specific job descriptions. Automatically rewrite bullets to match requirements.",
       icon: <Sparkles className="w-6 h-6 text-action-blue" />,
       link: "/resume/jd-match",
       credits: "1 Credit",
       tier: "Pro",
       isPro: true,
       feature: "jd_matcher_enabled",
-      isComingSoon:true
+      isComingSoon: true,
     },
     {
       title: "AI Resume Builder",
-      description: "Build a professional resume from scratch with our interactive AI guide and industry templates.",
+      description:
+        "Build a professional resume from scratch with our interactive AI guide and industry templates.",
       icon: <Wand2 className="w-6 h-6 text-action-blue" />,
       link: "/resume/builder",
       credits: "5 Credits",
       tier: "Pro",
       isPro: true,
       feature: "resume_builder_enabled",
-      isComingSoon:true
-
+      isComingSoon: true,
     },
   ];
 
@@ -57,23 +68,31 @@ export function ResumeLandingContent() {
             >
               <div className="flex items-center gap-2 mb-6">
                 <div className="h-[1px] w-8 bg-action-blue" />
-                <span className="text-action-blue font-semibold tracking-wider text-xs uppercase">Career Suite</span>
+                <span className="text-action-blue font-semibold tracking-wider text-xs uppercase">
+                  Career Suite
+                </span>
               </div>
-              
+
               <h1 className="text-[56px] md:text-[72px] font-semibold leading-[1.05] tracking-[-0.03em] mb-8 text-ink">
                 Resume <br />
                 <span className="text-ink/40">Intelligence.</span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-8 md:mb-12">
-                A suite of high-performance AI engines designed to transform your professional narrative. Recruiter-grade insights, ATS-optimized architecture.
+                A suite of high-performance AI engines designed to transform
+                your professional narrative. Recruiter-grade insights,
+                ATS-optimized architecture.
               </p>
-              
+
               <div className="flex flex-wrap gap-4 pt-4">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="rounded-pill w-full md:w-fit bg-action-blue hover:bg-action-blue-hover text-white px-10 h-14 text-lg font-semibold transition-all active:scale-95 shadow-xl shadow-action-blue/20"
-                  onClick={() => document.getElementById('tools-grid')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() =>
+                    document
+                      .getElementById("tools-grid")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
                 >
                   Explore Suite
                   <ChevronRight className="w-5 h-5 ml-1" />
@@ -109,16 +128,16 @@ export function ResumeLandingContent() {
             </motion.div> */}
           </div>
 
-          <motion.div 
+          <motion.div
             className="relative aspect-[4/3] rounded-[32px] overflow-hidden bg-canvas-parchment border border-hairline group shadow-2xl"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            <Image 
-              src="/resume-hub-hero-v2.png" 
-              alt="Resume Intelligence Ecosystem" 
-              fill 
+            <Image
+              src="/resume-hub-hero-v2.png"
+              alt="Resume Intelligence Ecosystem"
+              fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               priority
             />
@@ -127,11 +146,17 @@ export function ResumeLandingContent() {
       </section>
 
       {/* SECTION 2: STUDIO SUITE (Parchment Section) - Store Grid Style */}
-      <section id="tools-grid" className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline">
+      <section
+        id="tools-grid"
+        className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline"
+      >
         <div className="mx-auto px-6 lg:px-12">
           <div className="flex flex-col md:flex-row justify-between md:items-end mb-16 gap-8">
             <div className="max-w-2xl">
-              <Badge variant="outline" className="rounded-pill px-4 py-1.5 border-action-blue/10 text-action-blue bg-action-blue/5 font-medium tracking-tight mb-6 text-xs uppercase">
+              <Badge
+                variant="outline"
+                className="rounded-pill px-4 py-1.5 border-action-blue/10 text-action-blue bg-action-blue/5 font-medium tracking-tight mb-6 text-xs uppercase"
+              >
                 Specialized Instruments
               </Badge>
               <h2 className="text-4xl lg:text-6xl font-semibold tracking-[-0.04em] text-ink leading-[1.1]">
@@ -139,44 +164,52 @@ export function ResumeLandingContent() {
               </h2>
             </div>
             <p className="text-lg text-ink/40 max-w-full md:max-w-sm leading-relaxed pb-2">
-              High-performance engines optimized for speed, accuracy, and recruiter impact.
+              High-performance engines optimized for speed, accuracy, and
+              recruiter impact.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {tools.map((tool, idx) => (
               // <FeatureFlag key={tool.title} name={tool.feature}>
-                <motion.div 
+              <motion.div
                 key={tool.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  className={`group relative flex flex-col bg-canvas border border-hairline rounded-lg overflow-hidden hover:border-action-blue/20 transition-all duration-500 hover:shadow-xl hover:shadow-action-blue/5 ${tool.isComingSoon ? "cursor-not-allowed opacity-50 text-white" : ""}`}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{
+                  delay: idx * 0.1,
+                  duration: 0.8,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className={`group relative flex flex-col bg-canvas border border-hairline rounded-lg overflow-hidden hover:border-action-blue/20 transition-all duration-500 hover:shadow-xl hover:shadow-action-blue/5 ${tool.isComingSoon ? "cursor-not-allowed opacity-50 text-white" : ""}`}
+              >
+                <Badge
+                  variant="outline"
+                  className={`absolute right-4 top-4 rounded-pill px-4 py-1.5 border-action-blue/10 text-action-blue bg-action-blue/5 font-medium tracking-tight mb-6 text-xs uppercase ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : ""}`}
                 >
-                  <Badge variant="outline" className={`absolute right-4 top-4 rounded-pill px-4 py-1.5 border-action-blue/10 text-action-blue bg-action-blue/5 font-medium tracking-tight mb-6 text-xs uppercase ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : ""}`}>
-                    {tool.isComingSoon ? "Coming Soon" : "New"}
-                  </Badge>
-                  <div className="p-8 flex-1 flex flex-col">
-                    <div className="mb-10 w-12 h-12 rounded-xl bg-canvas-parchment flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                      {tool.icon}
-                    </div>
-                    
-                    <div className="space-y-3 mb-8">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-2xl font-semibold text-ink tracking-tight">
-                          {tool.title}
-                        </h3>
-                        {/* {tool.isPro && (
+                  {tool.isComingSoon ? "Coming Soon" : "New"}
+                </Badge>
+                <div className="p-8 flex-1 flex flex-col">
+                  <div className="mb-10 w-12 h-12 rounded-xl bg-canvas-parchment flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                    {tool.icon}
+                  </div>
+
+                  <div className="space-y-3 mb-8">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-2xl font-semibold text-ink tracking-tight">
+                        {tool.title}
+                      </h3>
+                      {/* {tool.isPro && (
                           <span className="text-[9px] font-bold tracking-[0.1em] text-white bg-action-blue px-2 py-0.5 rounded-[4px] uppercase">PRO</span>
                         )} */}
-                      </div>
-                      <p className="text-base text-ink/40 leading-relaxed">
-                        {tool.description}
-                      </p>
                     </div>
-                    
-                    {/* <div className="mt-auto grid grid-cols-2 gap-6 pt-6 border-t border-hairline">
+                    <p className="text-base text-ink/40 leading-relaxed">
+                      {tool.description}
+                    </p>
+                  </div>
+
+                  {/* <div className="mt-auto grid grid-cols-2 gap-6 pt-6 border-t border-hairline">
                       <div className="space-y-1">
                         <p className="text-[10px] uppercase tracking-[0.1em] text-ink/20 font-bold">Tier</p>
                         <p className="text-sm font-semibold text-ink">{tool.tier}</p>
@@ -186,24 +219,28 @@ export function ResumeLandingContent() {
                         <p className="text-sm font-semibold text-ink">{tool.credits}</p>
                       </div>
                     </div> */}
-                  </div>
-                  
-                  <div className="px-8 pb-8">
-                    <Button asChild className={`w-full rounded-pill h-12 ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : "bg-action-blue hover:bg-action-blue-hover text-white font-normal text-base transition-all active:scale-95 group/btn"} ${tool.isComingSoon?"cursor-not-allowed opacity-50":""}`}>
-                      <Link href={tool.link}>
-                        {tool.isComingSoon ? "Coming Soon" : "Launch Tool"}
-                        {!tool.isComingSoon && <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />}
-                      </Link>
-                    </Button>
-                  </div>
-                </motion.div>
+                </div>
+
+                <div className="px-8 pb-8">
+                  <Button
+                    asChild
+                    className={`w-full rounded-pill h-12 ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : "bg-action-blue hover:bg-action-blue-hover text-white font-normal text-base transition-all active:scale-95 group/btn"} ${tool.isComingSoon ? "cursor-not-allowed opacity-50" : ""}`}
+                  >
+                    <Link href={tool.link}>
+                      {tool.isComingSoon ? "Coming Soon" : "Launch Tool"}
+                      {!tool.isComingSoon && (
+                        <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                      )}
+                    </Link>
+                  </Button>
+                </div>
+              </motion.div>
               // </FeatureFlag>
             ))}
           </div>
         </div>
       </section>
 
-      
       {/* <section className="bg-canvas py-24 overflow-hidden">
         <div className="mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">

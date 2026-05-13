@@ -1,10 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import InterviewSetupForm, { InterviewConfig } from '@/components/interview/interview-setup-form';
 import { useCreateInterview } from '@/hooks/use-interviews';
 import { useRouter } from 'next/navigation';
 import AuthWrapper from '@/components/auth/auth-wrapper';
 import { useAuth } from '@/lib/auth-context';
+import { InterviewSetupSkeleton } from '@/components/interview/interview-setup-skeleton';
 
 export default function InterviewSetupPage() {
   const router = useRouter();
@@ -27,10 +29,12 @@ export default function InterviewSetupPage() {
       <div className="min-h-screen bg-canvas">
         <main id="main-content" className="section-padding">
           <div className="max-w-screen-xl mx-auto">
-            <InterviewSetupForm 
-              onStartInterview={handleStartInterview} 
-              isLoading={createInterview.isPending}
-            />
+            <Suspense fallback={<InterviewSetupSkeleton />}>
+              <InterviewSetupForm 
+                onStartInterview={handleStartInterview} 
+                isLoading={createInterview.isPending}
+              />
+            </Suspense>
           </div>
         </main>
       </div>
