@@ -4,7 +4,7 @@ import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ResumeBuilderContent } from "@/components/resume/resume-builder-content";
+import { ResumeBuilderContent } from "@/components/resume/resume-builder/resume-builder-content";
 import { BuilderSkeleton } from "@/components/resume/resume-skeletons";
 
 export const metadata: Metadata = {
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default async function ResumeBuilderPage() {
   const queryClient = getQueryClient();
 
-  // Pre-fetch Auth User to ensure session is available for the builder
   await queryClient.prefetchQuery({
     queryKey: ["auth-user"],
     queryFn: async () => {

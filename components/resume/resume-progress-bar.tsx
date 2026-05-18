@@ -24,10 +24,10 @@ export function ResumeProgressBar({ completionMap }: ResumeProgressBarProps) {
   const progress = (completedCount / FIELDS.length) * 100;
 
   return (
-    <div className="w-full bg-white/50 backdrop-blur-md border-b border-black/5 py-4 px-6 sticky top-0 z-20">
+    <div className="w-full bg-background backdrop-blur-md border-b border-black/5 py-4 px-6 sticky top-0 z-20">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-medium text-black/40 uppercase tracking-widest">
+          <span className="text-xs font-medium text-ink uppercase tracking-widest">
             Builder Progress
           </span>
           <span className="text-xs font-bold text-black/60">
@@ -54,7 +54,7 @@ export function ResumeProgressBar({ completionMap }: ResumeProgressBarProps) {
                     "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300",
                     isComplete
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                      : "bg-black/5 text-black/20 group-hover:bg-black/10"
+                      : "bg-ink/5 text-ink/20 group-hover:bg-ink/10"
                   )}
                 >
                   {isComplete ? (
@@ -66,7 +66,7 @@ export function ResumeProgressBar({ completionMap }: ResumeProgressBarProps) {
                 <span
                   className={cn(
                     "text-[10px] font-medium transition-colors duration-300",
-                    isComplete ? "text-black/80" : "text-black/30"
+                    isComplete ? "text-ink" : "text-ink/60"
                   )}
                 >
                   {field.label}
