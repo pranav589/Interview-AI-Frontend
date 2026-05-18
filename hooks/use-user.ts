@@ -4,6 +4,17 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { MESSAGES } from "@/lib/constants";
 
+export interface UserResumeUploadResult {
+  resumeText: string;
+  user: any;
+  resumeId?: string;
+  jobId?: string;
+  extractionStatus?: "pending" | "processing" | "completed" | "failed";
+  isDuplicate: boolean;
+  startedExtraction: boolean;
+  requiresConfirmation?: boolean;
+}
+
 export const useUpdateSettings = () => {
   const queryClient = useQueryClient();
 
@@ -30,15 +41,30 @@ export const useUploadResume = () => {
 
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await api.post("user/resume", formData, {
+      const response = await api.post<{ success: boolean; message?: string; data: UserResumeUploadResult }>("user/resume", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return response;
     },
-    onSuccess: async () => {
+    onSuccess: async (response) => {
       await refreshUser();
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      toast.success(MESSAGES.RESUME.UPLOAD_SUCCESS);
+      const data = response?.data;
+      if (data?.isDuplicate && !data.startedExtraction) {
+        if (data.extractionStatus === "pending" || data.extractionStatus === "processing") {
+          toast.info("Extraction is already running in the background. We'll notify you when it's ready.");
+        } else if (data.extractionStatus === "completed") {
+          toast.success("Using the existing extracted resume.");
+        } else {
+          toast.warning("This resume was uploaded, but the previous extraction failed. You can retry extraction later.");
+        }
+        return;
+      }
+
+      toast.success(
+        response?.message ||
+          "Resume uploaded. Details are being extracted in the background; we'll notify you when it's ready.",
+      );
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || MESSAGES.RESUME.UPLOAD_FAILED);

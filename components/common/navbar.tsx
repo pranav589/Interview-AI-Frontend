@@ -135,6 +135,16 @@ export function Navbar() {
                     </Button>
                   </Link>
 
+                  <Link href="/resume/vault">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-caption text-ink/70 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
+                    >
+                      Resume Vault
+                    </Button>
+                  </Link>
+
                   <NotificationBell />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -218,6 +228,15 @@ export function Navbar() {
                           >
                             <FileText className="w-5 h-5" />
                             Resume Hub
+                          </Button>
+                        </Link>
+                        <Link href="/resume/vault" className="w-full">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
+                          >
+                            <FileText className="w-5 h-5" />
+                            Resume Vault
                           </Button>
                         </Link>
                         <Link href="/dashboard/settings" className="w-full">
