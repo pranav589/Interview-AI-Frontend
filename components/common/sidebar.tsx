@@ -222,7 +222,7 @@ export function Sidebar() {
         </div>
 
         {/* Credit & User card at the bottom */}
-        <div className="flex flex-col gap-3 pt-4 border-t border-hairline mt-auto">
+        {/* <div className="flex flex-col gap-3 pt-4 border-t border-hairline mt-auto">
           {isCollapsed ? (
             <Tooltip delayDuration={50}>
               <TooltipTrigger asChild>
@@ -280,7 +280,7 @@ export function Sidebar() {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
       </aside>
     </TooltipProvider>
   );
