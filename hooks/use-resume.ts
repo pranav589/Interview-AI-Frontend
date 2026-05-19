@@ -1,6 +1,11 @@
-import { useQuery, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ApiResponse } from "@/lib/api"; 
+import { ApiResponse } from "@/lib/api";
 
 export interface Resume {
   _id: string;
@@ -14,7 +19,12 @@ export interface Resume {
 
 export interface ResumeJob {
   _id: string;
-  jobType: "resume-extraction" | "resume-analysis" | "jd-match" | "builder-export" | "jd-match-export";
+  jobType:
+    | "resume-extraction"
+    | "resume-analysis"
+    | "jd-match"
+    | "builder-export"
+    | "jd-match-export";
   status: "queued" | "processing" | "completed" | "failed";
   error?: string;
   resultRef?: {
@@ -48,7 +58,9 @@ export const useResumes = () => {
     },
     refetchInterval: (query) => {
       const hasPending = query.state.data?.some(
-        (r) => r.extractionStatus === "pending" || r.extractionStatus === "processing"
+        (r) =>
+          r.extractionStatus === "pending" ||
+          r.extractionStatus === "processing",
       );
       return hasPending ? 4000 : false;
     },
@@ -64,7 +76,9 @@ export const useSuspenseResumes = () => {
     },
     refetchInterval: (query) => {
       const hasPending = query.state.data?.some(
-        (r) => r.extractionStatus === "pending" || r.extractionStatus === "processing"
+        (r) =>
+          r.extractionStatus === "pending" ||
+          r.extractionStatus === "processing",
       );
       return hasPending ? 4000 : false;
     },
@@ -75,7 +89,10 @@ export const useUploadResume = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<ApiResponse<ResumeUploadResult>>("/resume/upload", formData);
+      return api.post<ApiResponse<ResumeUploadResult>>(
+        "/resume/upload",
+        formData,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resumes"] });
@@ -98,7 +115,9 @@ export const useSetDefaultResume = () => {
 export const useAnalyzeResume = () => {
   return useMutation({
     mutationFn: async (resumeId: string) => {
-      return api.post<ApiResponse<ResumeJobKickoff>>("/resume/analyze", { resumeId });
+      return api.post<ApiResponse<ResumeJobKickoff>>("/resume/analyze", {
+        resumeId,
+      });
     },
   });
 };
@@ -106,7 +125,10 @@ export const useAnalyzeResume = () => {
 export const useJdMatch = () => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<ApiResponse<ResumeJobKickoff>>("/resume/jd-match", formData);
+      return api.post<ApiResponse<ResumeJobKickoff>>(
+        "/resume/jd-match",
+        formData,
+      );
     },
   });
 };
@@ -116,12 +138,15 @@ export const useResumeJob = (jobId?: string) => {
     queryKey: ["resume-job", jobId],
     enabled: Boolean(jobId),
     queryFn: async () => {
-      const response = await api.get<ApiResponse<ResumeJob>>(`/resume/jobs/${jobId}`);
+      const response = await api.get<ApiResponse<ResumeJob>>(
+        `/resume/jobs/${jobId}`,
+      );
       return response.data;
     },
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (!status || status === "queued" || status === "processing") return 4000;
+      if (!status || status === "queued" || status === "processing")
+        return 4000;
       return false;
     },
   });
@@ -130,15 +155,50 @@ export const useResumeJob = (jobId?: string) => {
 export const useStartBuilder = () => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<ApiResponse>("/resume/builder/start", formData);
+      return api.post<
+        ApiResponse<{
+          session: any;
+          sessionId: string;
+          jobId: string;
+          extractionStatus: string;
+        }>
+      >("/resume/builder/start", formData);
+    },
+  });
+};
+
+export const useBuilderJob = (jobId?: string) => {
+  return useQuery({
+    queryKey: ["builder-job", jobId],
+    enabled: Boolean(jobId),
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<ResumeJob>>(
+        `/resume/jobs/${jobId}`,
+      );
+      return response.data;
+    },
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (!status || status === "queued" || status === "processing")
+        return 5000;
+      return false;
     },
   });
 };
 
 export const useSendBuilderMessage = () => {
   return useMutation({
-    mutationFn: async ({ sessionId, message }: { sessionId: string; message: string }) => {
-      return api.post<ApiResponse>("/resume/builder/message", { sessionId, message });
+    mutationFn: async ({
+      sessionId,
+      message,
+    }: {
+      sessionId: string;
+      message: string;
+    }) => {
+      return api.post<ApiResponse>("/resume/builder/message", {
+        sessionId,
+        message,
+      });
     },
   });
 };
@@ -148,7 +208,9 @@ export const useBuilderSession = (sessionId?: string) => {
     queryKey: ["builder-session", sessionId],
     enabled: Boolean(sessionId),
     queryFn: async () => {
-      const response = await api.get<ApiResponse>(`/resume/builder/${sessionId}`);
+      const response = await api.get<ApiResponse>(
+        `/resume/builder/${sessionId}`,
+      );
       return response.data;
     },
   });
@@ -168,10 +230,17 @@ export const useUpdateBuilderSession = () => {
       templateId?: string;
       currentStep?: string;
     }) => {
-      return api.patch<ApiResponse>(`/resume/builder/${sessionId}`, { resumeData, templateId, currentStep });
+      return api.patch<ApiResponse>(`/resume/builder/${sessionId}`, {
+        resumeData,
+        templateId,
+        currentStep,
+      });
     },
     onSuccess: (response: any, variables) => {
-      queryClient.setQueryData(["builder-session", variables.sessionId], response.data);
+      queryClient.setQueryData(
+        ["builder-session", variables.sessionId],
+        response.data,
+      );
     },
   });
 };
@@ -200,14 +269,22 @@ export const useRunBuilderCommand = () => {
       targetContext,
     }: {
       sessionId: string;
-      command: "bullet" | "shorten" | "expand" | "quantify" | "tone" | "keywords";
+      command:
+        | "bullet"
+        | "shorten"
+        | "expand"
+        | "quantify"
+        | "tone"
+        | "keywords";
       fieldPath: string;
       selectedText?: string;
       fieldText: string;
       resumeData: any;
       targetContext?: string;
     }) => {
-      return api.post<ApiResponse<{ replacementText: string; explanation?: string }>>(`/resume/builder/${sessionId}/command`, {
+      return api.post<
+        ApiResponse<{ replacementText: string; explanation?: string }>
+      >(`/resume/builder/${sessionId}/command`, {
         command,
         fieldPath,
         selectedText,
@@ -219,17 +296,21 @@ export const useRunBuilderCommand = () => {
   });
 };
 
-const triggerDownload = (blob: Blob, contentDisposition?: string, defaultFileName: string = "resume.pdf") => {
+const triggerDownload = (
+  blob: Blob,
+  contentDisposition?: string,
+  defaultFileName: string = "resume.pdf",
+) => {
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  
+
   let fileName = defaultFileName;
   if (contentDisposition) {
     const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
     if (fileNameMatch) fileName = fileNameMatch[1];
   }
-  
+
   link.setAttribute("download", fileName);
   document.body.appendChild(link);
   link.click();
@@ -239,7 +320,15 @@ const triggerDownload = (blob: Blob, contentDisposition?: string, defaultFileNam
 
 export const useExportResume = () => {
   return useMutation({
-    mutationFn: async ({ resumeData, templateId, sessionId }: { resumeData?: any; templateId?: string; sessionId?: string }) => {
+    mutationFn: async ({
+      resumeData,
+      templateId,
+      sessionId,
+    }: {
+      resumeData?: any;
+      templateId?: string;
+      sessionId?: string;
+    }) => {
       const base = process.env.NEXT_PUBLIC_API_URL || "";
       const normalizedBase = base.endsWith("/") ? base : `${base}/`;
       const response = await fetch(`${normalizedBase}resume/builder/export`, {
@@ -257,8 +346,12 @@ export const useExportResume = () => {
       };
     },
     onSuccess: (data) => {
-      triggerDownload(data.blob, data.contentDisposition || undefined, "resume.pdf");
-    }
+      triggerDownload(
+        data.blob,
+        data.contentDisposition || undefined,
+        "resume.pdf",
+      );
+    },
   });
 };
 
@@ -267,10 +360,13 @@ export const useDownloadResumeJobArtifact = () => {
     mutationFn: async (jobId: string) => {
       const base = process.env.NEXT_PUBLIC_API_URL || "";
       const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-      const response = await fetch(`${normalizedBase}resume/jobs/${jobId}/download`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${normalizedBase}resume/jobs/${jobId}/download`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Failed to download exported resume");
@@ -278,26 +374,40 @@ export const useDownloadResumeJobArtifact = () => {
 
       return {
         blob: await response.blob(),
-        contentDisposition: response.headers.get("content-disposition") || undefined,
+        contentDisposition:
+          response.headers.get("content-disposition") || undefined,
       };
     },
     onSuccess: (data) => {
-      triggerDownload(data.blob, data.contentDisposition || undefined, "resume.pdf");
-    }
+      triggerDownload(
+        data.blob,
+        data.contentDisposition || undefined,
+        "resume.pdf",
+      );
+    },
   });
 };
 
 export const useExportJdMatch = () => {
   return useMutation({
-    mutationFn: async ({ matchId, templateId }: { matchId: string; templateId?: string }) => {
+    mutationFn: async ({
+      matchId,
+      templateId,
+    }: {
+      matchId: string;
+      templateId?: string;
+    }) => {
       const base = process.env.NEXT_PUBLIC_API_URL || "";
       const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-      const response = await fetch(`${normalizedBase}resume/jd-match/${matchId}/export`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateId }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${normalizedBase}resume/jd-match/${matchId}/export`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateId }),
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to generate PDF");
 
@@ -307,8 +417,12 @@ export const useExportJdMatch = () => {
       };
     },
     onSuccess: (data) => {
-      triggerDownload(data.blob, data.contentDisposition || undefined, "matched-resume.pdf");
-    }
+      triggerDownload(
+        data.blob,
+        data.contentDisposition || undefined,
+        "matched-resume.pdf",
+      );
+    },
   });
 };
 
@@ -316,7 +430,9 @@ export const useJdMatchById = (id: string) => {
   return useQuery({
     queryKey: ["jd-match", id],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<any>>(`/resume/jd-match/${id}`);
+      const response = await api.get<ApiResponse<any>>(
+        `/resume/jd-match/${id}`,
+      );
       return response.data;
     },
     enabled: Boolean(id),
@@ -369,10 +485,13 @@ export const useExportAnalysis = () => {
     mutationFn: async (id: string) => {
       const base = process.env.NEXT_PUBLIC_API_URL || "";
       const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-      const response = await fetch(`${normalizedBase}resume/analyze/${id}/export`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${normalizedBase}resume/analyze/${id}/export`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to export analysis report");
 
@@ -382,15 +501,22 @@ export const useExportAnalysis = () => {
       };
     },
     onSuccess: (data, id) => {
-      triggerDownload(data.blob, data.contentDisposition || undefined, `Analysis_Report_${id}.pdf`);
-    }
+      triggerDownload(
+        data.blob,
+        data.contentDisposition || undefined,
+        `Analysis_Report_${id}.pdf`,
+      );
+    },
   });
 };
 
 export const useGenerateTemplates = () => {
   return useMutation({
     mutationFn: async (sessionId: string) => {
-      const response = await api.post<ApiResponse<{ templates: any[] }>>("/resume/builder/generate", { sessionId });
+      const response = await api.post<ApiResponse<{ templates: any[] }>>(
+        "/resume/builder/generate",
+        { sessionId },
+      );
       return response;
     },
   });
@@ -398,26 +524,42 @@ export const useGenerateTemplates = () => {
 
 export const useDownloadTemplate = () => {
   return useMutation({
-    mutationFn: async ({ sessionId, templateId, format }: { sessionId: string; templateId: string; format: "pdf" | "docx" }) => {
+    mutationFn: async ({
+      sessionId,
+      templateId,
+      format,
+    }: {
+      sessionId: string;
+      templateId: string;
+      format: "pdf" | "docx";
+    }) => {
       const base = process.env.NEXT_PUBLIC_API_URL || "";
       const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-      const response = await fetch(`${normalizedBase}resume/builder/${sessionId}/download/${templateId}?format=${format}`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${normalizedBase}resume/builder/${sessionId}/download/${templateId}?format=${format}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
-      if (!response.ok) throw new Error(`Failed to download ${format.toUpperCase()}`);
+      if (!response.ok)
+        throw new Error(`Failed to download ${format.toUpperCase()}`);
 
       return {
         blob: await response.blob(),
         contentDisposition: response.headers.get("content-disposition"),
         format,
-        templateId
+        templateId,
       };
     },
     onSuccess: (data) => {
       const extension = data.format === "pdf" ? "pdf" : "docx";
-      triggerDownload(data.blob, data.contentDisposition || undefined, `Resume_${data.templateId}.${extension}`);
-    }
+      triggerDownload(
+        data.blob,
+        data.contentDisposition || undefined,
+        `Resume_${data.templateId}.${extension}`,
+      );
+    },
   });
 };

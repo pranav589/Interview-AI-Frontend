@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useFeatureFlags } from "@/lib/feature-flags-context";
 import {
   useCompleteBuilderSession,
@@ -24,6 +25,7 @@ import {
   useSendBuilderMessage,
   useStartBuilder,
   useUpdateBuilderSession,
+  useUploadResume,
 } from "@/hooks/use-resume";
 
 // Shared Types & Normalization Helpers
@@ -34,7 +36,6 @@ import {
   SaveStatus,
   emptyResumeData,
   normalizeDraft,
-  ACCEPTED_TYPES,
 } from "./resume-builder-types";
 
 // Child Components
@@ -44,7 +45,6 @@ import { EditorMode } from "./resume-builder-editor";
 export function ResumeBuilderContent() {
   const router = useRouter();
   const { isFeatureEnabled, isLoading: isFlagsLoading } = useFeatureFlags();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [session, setSession] = useState<BuilderSession | null>(null);
   const [draft, setDraft] = useState<ResumeData>(emptyResumeData());
@@ -52,12 +52,13 @@ export function ResumeBuilderContent() {
   const [inputText, setInputText] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [activeGhostField, setActiveGhostField] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSavedJsonRef = useRef("");
   const hasMountedEditorRef = useRef(false);
 
   const startMutation = useStartBuilder();
+  const uploadMutation = useUploadResume();
   const sendMutation = useSendBuilderMessage();
   const updateMutation = useUpdateBuilderSession();
   const completeMutation = useCompleteBuilderSession();
@@ -76,7 +77,7 @@ export function ResumeBuilderContent() {
     if (viewport) viewport.scrollTop = viewport.scrollHeight;
   }, [messages.length, sendMutation.isPending]);
 
-  // Handle setting session draft when editor mode is entered
+  // Sync draft when entering editor
   useEffect(() => {
     if (!session || mode !== "editor") return;
     const nextDraft = normalizeDraft(session.resumeData);
@@ -86,7 +87,7 @@ export function ResumeBuilderContent() {
     setSaveStatus("saved");
   }, [mode, session?._id]);
 
-  // Debounced auto-save effect
+  // Debounced auto-save
   useEffect(() => {
     if (!session?._id || mode !== "editor") return;
 
@@ -121,32 +122,69 @@ export function ResumeBuilderContent() {
     return <FeatureUnavailable onBack={() => router.push("/resume")} />;
   }
 
-  const handleFileChange = (file?: File) => {
+  // Upload a new file — stays on the same page, auto-selects the new resume card
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error("Upload a PDF, DOCX, or TXT file.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB.");
-      return;
-    }
-    setSelectedFile(file);
-    setSelectedResumeId(null);
+
+    const doUpload = (forceReextract = false) => {
+      const formData = new FormData();
+      formData.append("resume", file);
+      formData.append("name", file.name);
+      if (forceReextract) formData.append("forceReextract", "true");
+
+      uploadMutation.mutate(formData, {
+        onSuccess: (res: any) => {
+          const data = res?.data || {};
+          const id = data.resumeId || data.resume?._id;
+          const status = data.extractionStatus;
+
+          if (data.isDuplicate && !data.startedExtraction && !forceReextract) {
+            if (status === "pending" || status === "processing") {
+              toast.info("Extraction is already running in the background. We'll notify you when it's ready.");
+              if (id) setSelectedResumeId(id);
+              return;
+            }
+
+            const shouldReextract = window.confirm(
+              status === "failed"
+                ? "The previous extraction for this resume failed. Do you want to retry?"
+                : "This resume has already been extracted. Do you want to extract it again?",
+            );
+
+            if (shouldReextract) {
+              doUpload(true);
+              return;
+            }
+
+            toast.success("Using the existing extracted resume.");
+            if (id) setSelectedResumeId(id);
+            return;
+          }
+
+          toast.success(
+            data.startedExtraction
+              ? "Resume uploaded. Details are being extracted in the background; we'll notify you when it's ready."
+              : "Resume uploaded!",
+          );
+          if (id) setSelectedResumeId(id);
+        },
+        onError: (error: any) => toast.error(error?.message || "Upload failed"),
+      });
+    };
+
+    doUpload(false);
   };
 
+  // Continue — start a builder session from the selected (already-extracted) resume
   const handleStart = () => {
-    if (!selectedFile && !selectedResumeId) {
+    if (!selectedResumeId) {
       toast.error("Choose a saved resume or upload a file first.");
       return;
     }
 
     const formData = new FormData();
-    if (selectedFile) {
-      formData.append("file", selectedFile);
-      formData.append("name", selectedFile.name.replace(/\.[^/.]+$/, ""));
-    }
-    if (selectedResumeId) formData.append("resumeId", selectedResumeId);
+    formData.append("resumeId", selectedResumeId);
 
     startMutation.mutate(formData, {
       onSuccess: (res: any) => {
@@ -231,17 +269,13 @@ export function ResumeBuilderContent() {
   if (!session) {
     return (
       <StartScreen
-        selectedFile={selectedFile}
         selectedResumeId={selectedResumeId}
-        fileInputRef={fileInputRef}
         resumes={resumesQuery.data || []}
         isLoadingResumes={resumesQuery.isLoading}
+        isUploading={uploadMutation.isPending}
         isStarting={startMutation.isPending}
-        onFileChange={handleFileChange}
-        onPickResume={(resumeId) => {
-          setSelectedResumeId(resumeId);
-          setSelectedFile(null);
-        }}
+        onFileUpload={handleFileUpload}
+        onPickResume={setSelectedResumeId}
         onStart={handleStart}
       />
     );
@@ -299,29 +333,27 @@ function FeatureUnavailable({ onBack }: { onBack: () => void }) {
 }
 
 function StartScreen({
-  selectedFile,
   selectedResumeId,
-  fileInputRef,
   resumes,
   isLoadingResumes,
+  isUploading,
   isStarting,
-  onFileChange,
+  onFileUpload,
   onPickResume,
   onStart,
 }: {
-  selectedFile: File | null;
   selectedResumeId: string | null;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  resumes: Array<{ _id: string; name: string; createdAt?: string }>;
+  resumes: Array<{ _id: string; name: string; createdAt?: string; extractionStatus?: string }>;
   isLoadingResumes: boolean;
+  isUploading: boolean;
   isStarting: boolean;
-  onFileChange: (file?: File) => void;
+  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPickResume: (resumeId: string) => void;
   onStart: () => void;
 }) {
   return (
     <div className="w-full bg-canvas">
-      {/* SECTION 1: EDITORIAL HERO (Pure White) */}
+      {/* SECTION 1: HERO */}
       <section className="relative min-h-[85vh] flex items-center border-b border-hairline overflow-hidden bg-canvas">
         <div className="mx-auto px-6 lg:px-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 py-12 md:py-20">
           <div className="flex flex-col justify-center space-y-8 z-10">
@@ -331,24 +363,24 @@ function StartScreen({
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <div className="flex items-center gap-2 mb-6">
-                <div className="h-[1px] w-8 bg-action-blue" />
+                <div className="h-px w-8 bg-action-blue" />
                 <span className="text-action-blue font-semibold tracking-wider text-xs uppercase">Creation Engine</span>
               </div>
-              
+
               <h1 className="text-[56px] md:text-[72px] font-semibold leading-[1.05] tracking-[-0.03em] mb-8 text-ink">
                 Build your story. <br />
                 <span className="text-ink/40">From scratch to offer.</span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-ink/50 leading-relaxed max-w-[540px] font-medium mb-6 md:mb-12">
-                Start with a saved resume or upload a LinkedIn export. The AI will extract the structure, spot gaps, and ask the next best question.
+                Start with a saved resume or upload a new PDF. The AI will extract the structure, spot gaps, and ask the next best question.
               </p>
-              
+
               <div className="flex flex-wrap gap-4 pt-4">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="rounded-pill w-full md:w-auto px-10 h-14 text-white text-lg font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 group shadow-xl shadow-action-blue/20"
-                  onClick={() => document.getElementById('builder-selection')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => document.getElementById("builder-selection")?.scrollIntoView({ behavior: "smooth" })}
                 >
                   <MessageSquare className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
                   Start Building
@@ -357,16 +389,16 @@ function StartScreen({
             </motion.div>
           </div>
 
-          <motion.div 
+          <motion.div
             className="relative aspect-[4/3] rounded-[32px] overflow-hidden bg-canvas-parchment border border-hairline group shadow-2xl"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
           >
-            <Image 
-              src="/resume-builder-hero.png" 
-              alt="Resume Builder Interface" 
-              fill 
+            <Image
+              src="/resume-builder-hero.png"
+              alt="Resume Builder Interface"
+              fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               priority
             />
@@ -383,49 +415,33 @@ function StartScreen({
                 Select foundation material.
               </h2>
               <p className="text-lg text-ink/40 leading-relaxed">
-                Choose a version from your vault or upload a new PDF/DOCX to begin.
+                Choose a version from your vault or upload a new PDF to begin.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {/* Upload Card */}
-            <label 
-              onDrop={(event) => {
-                event.preventDefault();
-                onFileChange(event.dataTransfer.files?.[0]);
-              }}
-              onDragOver={(event) => event.preventDefault()}
-              className={`group relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-300 min-h-[160px] ${
-                selectedFile 
-                ? "border-action-blue bg-canvas shadow-xl shadow-action-blue/5" 
-                : "border-hairline bg-canvas/50 hover:border-action-blue/50 hover:bg-canvas"
-              }`}
-            >
-              <input
-                ref={fileInputRef}
+            <label className="group relative flex flex-col items-center justify-center p-4 rounded-xl border-2 border-hairline border-dashed bg-white/50 hover:bg-white hover:border-action-blue/50 cursor-pointer transition-all duration-300 min-h-[160px]">
+              <Input
                 type="file"
-                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                 className="hidden"
-                onChange={(event) => onFileChange(event.target.files?.[0])}
+                accept=".pdf,.docx,.txt"
+                onChange={onFileUpload}
+                disabled={isUploading}
               />
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-500 ${
-                selectedFile ? "bg-action-blue text-white" : "bg-action-blue/5 text-action-blue"
-              }`}>
-                {selectedFile ? <FileText className="w-5 h-5" /> : <Upload className="w-5 h-5" />}
+              <div className="w-10 h-10 rounded-full bg-action-blue/5 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-500">
+                {isUploading ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-action-blue" />
+                ) : (
+                  <Upload className="w-5 h-5 text-action-blue" />
+                )}
               </div>
-              <p className="text-sm font-semibold text-ink text-center line-clamp-2">
-                {selectedFile ? selectedFile.name : "Upload PDF/DOCX"}
-              </p>
-              {selectedFile && (
-                <div className="absolute top-4 right-4">
-                  <CheckCircle2 className="w-4 h-4 text-action-blue" />
-                </div>
-              )}
+              <p className="text-sm font-semibold text-ink">Upload PDF</p>
             </label>
 
             {/* Resume Cards */}
-            {!isLoadingResumes && resumes.map((resume, index) => (
+            {resumes.map((resume, index) => (
               <motion.div
                 key={resume._id}
                 initial={{ opacity: 0, y: 10 }}
@@ -433,27 +449,33 @@ function StartScreen({
                 transition={{ delay: index * 0.05, duration: 0.5 }}
                 onClick={() => onPickResume(resume._id)}
                 className={`group relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 min-h-[160px] ${
-                  selectedResumeId === resume._id 
-                  ? "border-action-blue bg-canvas shadow-xl shadow-action-blue/5" 
-                  : "border-hairline bg-canvas/50 hover:border-action-blue/30 hover:bg-canvas"
+                  selectedResumeId === resume._id
+                    ? "border-action-blue bg-white shadow-xl shadow-action-blue/5"
+                    : "border-hairline bg-white/50 hover:border-action-blue/30 hover:bg-white"
                 }`}
               >
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
-                      selectedResumeId === resume._id ? "bg-action-blue text-white" : "bg-action-blue/5 text-action-blue"
-                    }`}>
-                      <FileText className="w-5 h-5" />
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                        selectedResumeId === resume._id ? "bg-action-blue text-white" : "bg-action-blue/5 text-action-blue"
+                      }`}
+                    >
+                      {resume.extractionStatus === "processing" || resume.extractionStatus === "pending" ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <FileText className="w-5 h-5" />
+                      )}
                     </div>
-                    {selectedResumeId === resume._id && (
-                      <CheckCircle2 className="w-4 h-4 text-action-blue" />
-                    )}
+                    {selectedResumeId === resume._id && <CheckCircle2 className="w-4 h-4 text-action-blue" />}
                   </div>
-                  <h3 className="text-sm font-semibold text-ink line-clamp-2 leading-tight mb-1">
-                    {resume.name}
-                  </h3>
+                  <h3 className="text-sm font-semibold text-ink line-clamp-2 leading-tight mb-1">{resume.name}</h3>
                   <p className="text-[10px] text-ink/30 font-medium">
-                    {resume.createdAt ? new Date(resume.createdAt).toLocaleDateString() : "Saved resume"}
+                    {resume.extractionStatus === "processing" || resume.extractionStatus === "pending"
+                      ? "Extracting…"
+                      : resume.createdAt
+                      ? new Date(resume.createdAt).toLocaleDateString()
+                      : "Saved resume"}
                   </p>
                 </div>
               </motion.div>
@@ -469,19 +491,19 @@ function StartScreen({
           <div className="mt-16 flex justify-center">
             <Button
               size="lg"
-              disabled={(!selectedResumeId && !selectedFile) || isStarting}
+              disabled={!selectedResumeId || isStarting}
               onClick={onStart}
               className="rounded-pill px-12 py-8 text-white text-xl font-semibold bg-action-blue hover:bg-action-blue-hover transition-all active:scale-95 disabled:opacity-30 shadow-xl shadow-action-blue/20"
             >
               {isStarting ? (
                 <>
                   <Loader2 className="w-6 h-6 mr-3 animate-spin" />
-                  Starting...
+                  Starting…
                 </>
               ) : (
                 <>
                   Continue
-                  <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-6 h-6 ml-3" />
                 </>
               )}
             </Button>
@@ -491,3 +513,4 @@ function StartScreen({
     </div>
   );
 }
+
