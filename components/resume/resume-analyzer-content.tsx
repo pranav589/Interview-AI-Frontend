@@ -63,20 +63,55 @@ export function ResumeAnalyzerContent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const uploadFile = (forceReextract = false) => {
     const formData = new FormData();
     formData.append("resume", file);
     formData.append("name", file.name);
+      if (forceReextract) formData.append("forceReextract", "true");
 
     uploadMutation.mutate(formData, {
       onSuccess: (res: any) => {
-        toast.success("Resume uploaded!");
-        const id = res?.data?.id || res?.data?._id || res?._id;
+          const data = res?.data || {};
+          const id = data.resumeId || data.resume?._id || data.id || data._id;
+          const status = data.extractionStatus;
+
+          if (data.isDuplicate && !data.startedExtraction && !forceReextract) {
+            if (status === "pending" || status === "processing") {
+              toast.info("Extraction is already running in the background. We'll notify you when it's ready.");
+              if (id) setSelectedResumeId(id);
+              return;
+            }
+
+            const shouldReextract = window.confirm(
+              status === "failed"
+                ? "The previous extraction for this resume failed. Do you want to retry extraction in the background?"
+                : "This resume has already been extracted. Do you want to extract it again?",
+            );
+
+            if (shouldReextract) {
+              uploadFile(true);
+              return;
+            }
+
+            toast.success("Using the existing extracted resume.");
+            if (id) setSelectedResumeId(id);
+            return;
+          }
+
+          toast.success(
+            data.startedExtraction
+              ? "Resume uploaded. Details are being extracted in the background; we'll notify you when it's ready."
+              : "Resume uploaded!",
+          );
         if (id) setSelectedResumeId(id);
       },
       onError: (error: any) => {
         toast.error(error.message || "Upload failed");
       },
     });
+    };
+
+    uploadFile(false);
   };
 
   return (

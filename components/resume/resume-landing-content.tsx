@@ -40,7 +40,7 @@ export function ResumeLandingContent() {
       tier: "Pro",
       isPro: true,
       feature: "jd_matcher_enabled",
-      isComingSoon: true,
+      isComingSoon: false,
     },
     {
       title: "AI Resume Builder",
@@ -52,7 +52,7 @@ export function ResumeLandingContent() {
       tier: "Pro",
       isPro: true,
       feature: "resume_builder_enabled",
-      isComingSoon: true,
+      isComingSoon: false,
     },
   ];
 
@@ -145,7 +145,8 @@ export function ResumeLandingContent() {
         </div>
       </section>
 
-      {/* SECTION 2: STUDIO SUITE (Parchment Section) - Store Grid Style */}
+      
+
       <section
         id="tools-grid"
         className="bg-canvas-parchment py-12 md:py-24 border-b border-hairline"
@@ -169,7 +170,7 @@ export function ResumeLandingContent() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {tools.map((tool, idx) => (
               // <FeatureFlag key={tool.title} name={tool.feature}>
               <motion.div
@@ -241,7 +242,7 @@ export function ResumeLandingContent() {
         </div>
       </section>
 
-      {/* <section className="bg-canvas py-24 overflow-hidden">
+<section className="bg-canvas py-24 overflow-hidden border-b border-hairline">
         <div className="mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <motion.div
@@ -315,7 +316,7 @@ export function ResumeLandingContent() {
             </motion.div>
           </div>
         </div>
-      </section> */}
+      </section>
     </div>
   );
 }

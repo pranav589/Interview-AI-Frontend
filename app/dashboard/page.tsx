@@ -4,18 +4,9 @@ import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { DashboardStats } from "@/components/dashboard/dashboard-stats";
-import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
-import { RecentInterviewsList } from "@/components/dashboard/recent-interviews-list";
+import { DashboardTabContainer } from "@/components/dashboard/dashboard-tab-container";
 import { DashboardOnboarding } from "@/components/dashboard/dashboard-onboarding";
-import { DashboardTools } from "@/components/dashboard/dashboard-tools";
-import {
-  StatsSkeleton,
-  ChartsSkeleton,
-  InterviewsListSkeleton,
-} from "@/components/dashboard/dashboard-skeletons";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -42,9 +33,9 @@ export default async function Dashboard() {
 
   // Pre-fetch Dashboard specific data in parallel
   queryClient.prefetchQuery({
-    queryKey: ["interview-stats", userId],
+    queryKey: ["dashboard-stats", userId],
     queryFn: async () => {
-      const response = await api.get<{ data: any }>("interview/stats");
+      const response = await api.get<{ data: any }>("user/dashboard-stats");
       return response.data;
     },
   });
@@ -70,6 +61,15 @@ export default async function Dashboard() {
     },
   });
 
+  // Pre-fetch Resumes for immediate rendering on tab switch
+  queryClient.prefetchQuery({
+    queryKey: ["resumes"],
+    queryFn: async () => {
+      const response = await api.get<{ data: any }>("/resume");
+      return response.data;
+    },
+  });
+
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <AuthWrapper>
@@ -79,19 +79,7 @@ export default async function Dashboard() {
               <DashboardHeader userName={userData?.fullName} />
 
               <div className="space-y-16">
-                <Suspense fallback={<StatsSkeleton />}>
-                  <DashboardStats />
-                </Suspense>
-
-                <Suspense fallback={<ChartsSkeleton />}>
-                  <DashboardCharts />
-                </Suspense>
-
-                {/* <DashboardTools /> */}
-
-                <Suspense fallback={<InterviewsListSkeleton />}>
-                  <RecentInterviewsList />
-                </Suspense>
+                <DashboardTabContainer />
 
                 <Suspense fallback={null}>
                   <DashboardOnboarding />
@@ -104,3 +92,4 @@ export default async function Dashboard() {
     </HydrationBoundary>
   );
 }
+

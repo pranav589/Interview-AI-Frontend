@@ -24,6 +24,16 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
+axiosInstance.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type'];
+      delete config.headers['content-type'];
+    }
+  }
+  return config;
+});
+
 axiosInstance.interceptors.response.use(
   (response) => response.data,
   async (error: AxiosError) => {

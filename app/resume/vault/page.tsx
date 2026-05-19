@@ -4,25 +4,25 @@ import AuthWrapper from "@/components/auth/auth-wrapper";
 import { getQueryClient } from "@/lib/react-query";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ResumeBuilderContent } from "@/components/resume/resume-builder/resume-builder-content";
-import { BuilderSkeleton } from "@/components/resume/resume-skeletons";
+import { ResumeVaultContent } from "@/components/resume/resume-vault-content";
+import { ResumeLandingSkeleton } from "@/components/resume/resume-skeletons";
 
 export const metadata: Metadata = {
-  title: "AI Resume Builder | InterviewAI",
-  description: "Build a high-impact resume in minutes with our AI assistant.",
+  title: "Resume Vault | InterviewAI",
+  description: "Manage saved resumes and choose your default resume.",
 };
 
-export default async function ResumeBuilderPage() {
+export default async function ResumeVaultPage() {
   const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["auth-user"],
+    queryKey: ["resumes"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ data: any }>("user/me");
-        return response?.data || null;
+        const response = await api.get<{ data: any[] }>("/resume");
+        return response?.data || [];
       } catch (error) {
-        return null;
+        return [];
       }
     },
   });
@@ -32,8 +32,8 @@ export default async function ResumeBuilderPage() {
       <AuthWrapper>
         <div className="min-h-screen bg-canvas">
           <main id="main-content">
-            <Suspense fallback={<BuilderSkeleton />}>
-              <ResumeBuilderContent />
+            <Suspense fallback={<ResumeLandingSkeleton />}>
+              <ResumeVaultContent />
             </Suspense>
           </main>
         </div>

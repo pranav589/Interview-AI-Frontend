@@ -211,7 +211,7 @@ export default function InterviewSetupForm({
                       size="sm"
                       variant="outline"
                       onClick={() => setShowResumeModal(true)}
-                      className="border-amber-300 hover:bg-amber-100"
+                      className="border-amber-300 hover:bg-amber-100 text-black/80"
                     >
                       <FileUp className="w-4 h-4 mr-2" />
                       Upload Resume

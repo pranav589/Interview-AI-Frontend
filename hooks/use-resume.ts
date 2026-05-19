@@ -6,12 +6,15 @@ export interface Resume {
   _id: string;
   name: string;
   resumeText: string;
+  isDefault?: boolean;
+  extractionStatus?: "pending" | "processing" | "completed" | "failed";
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ResumeJob {
   _id: string;
-  jobType: "resume-analysis" | "jd-match" | "builder-export" | "jd-match-export";
+  jobType: "resume-extraction" | "resume-analysis" | "jd-match" | "builder-export" | "jd-match-export";
   status: "queued" | "processing" | "completed" | "failed";
   error?: string;
   resultRef?: {
@@ -26,12 +29,28 @@ export interface ResumeJobKickoff {
   status: "queued" | "processing";
 }
 
+export interface ResumeUploadResult {
+  resume?: Resume;
+  resumeId: string;
+  jobId?: string;
+  extractionStatus?: Resume["extractionStatus"];
+  isDuplicate: boolean;
+  startedExtraction: boolean;
+  requiresConfirmation?: boolean;
+}
+
 export const useResumes = () => {
   return useQuery({
     queryKey: ["resumes"],
     queryFn: async () => {
       const response = await api.get<ApiResponse<Resume[]>>("/resume");
       return response.data;
+    },
+    refetchInterval: (query) => {
+      const hasPending = query.state.data?.some(
+        (r) => r.extractionStatus === "pending" || r.extractionStatus === "processing"
+      );
+      return hasPending ? 4000 : false;
     },
   });
 };
@@ -43,6 +62,12 @@ export const useSuspenseResumes = () => {
       const response = await api.get<ApiResponse<Resume[]>>("/resume");
       return response.data;
     },
+    refetchInterval: (query) => {
+      const hasPending = query.state.data?.some(
+        (r) => r.extractionStatus === "pending" || r.extractionStatus === "processing"
+      );
+      return hasPending ? 4000 : false;
+    },
   });
 };
 
@@ -50,9 +75,19 @@ export const useUploadResume = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<ApiResponse<Resume>>("/resume/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      return api.post<ApiResponse<ResumeUploadResult>>("/resume/upload", formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resumes"] });
+    },
+  });
+};
+
+export const useSetDefaultResume = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (resumeId: string) => {
+      return api.patch<ApiResponse<Resume>>(`/resume/${resumeId}/default`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resumes"] });
@@ -71,9 +106,7 @@ export const useAnalyzeResume = () => {
 export const useJdMatch = () => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<ApiResponse<ResumeJobKickoff>>("/resume/jd-match", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      return api.post<ApiResponse<ResumeJobKickoff>>("/resume/jd-match", formData);
     },
   });
 };
@@ -96,8 +129,8 @@ export const useResumeJob = (jobId?: string) => {
 
 export const useStartBuilder = () => {
   return useMutation({
-    mutationFn: async (name: string) => {
-      return api.post<ApiResponse>("/resume/builder/start", { name });
+    mutationFn: async (formData: FormData) => {
+      return api.post<ApiResponse>("/resume/builder/start", formData);
     },
   });
 };
@@ -106,6 +139,82 @@ export const useSendBuilderMessage = () => {
   return useMutation({
     mutationFn: async ({ sessionId, message }: { sessionId: string; message: string }) => {
       return api.post<ApiResponse>("/resume/builder/message", { sessionId, message });
+    },
+  });
+};
+
+export const useBuilderSession = (sessionId?: string) => {
+  return useQuery({
+    queryKey: ["builder-session", sessionId],
+    enabled: Boolean(sessionId),
+    queryFn: async () => {
+      const response = await api.get<ApiResponse>(`/resume/builder/${sessionId}`);
+      return response.data;
+    },
+  });
+};
+
+export const useUpdateBuilderSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      resumeData,
+      templateId,
+      currentStep,
+    }: {
+      sessionId: string;
+      resumeData?: any;
+      templateId?: string;
+      currentStep?: string;
+    }) => {
+      return api.patch<ApiResponse>(`/resume/builder/${sessionId}`, { resumeData, templateId, currentStep });
+    },
+    onSuccess: (response: any, variables) => {
+      queryClient.setQueryData(["builder-session", variables.sessionId], response.data);
+    },
+  });
+};
+
+export const useCompleteBuilderSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      return api.post<ApiResponse>(`/resume/builder/${sessionId}/complete`);
+    },
+    onSuccess: (response: any, sessionId) => {
+      queryClient.setQueryData(["builder-session", sessionId], response.data);
+    },
+  });
+};
+
+export const useRunBuilderCommand = () => {
+  return useMutation({
+    mutationFn: async ({
+      sessionId,
+      command,
+      fieldPath,
+      selectedText,
+      fieldText,
+      resumeData,
+      targetContext,
+    }: {
+      sessionId: string;
+      command: "bullet" | "shorten" | "expand" | "quantify" | "tone" | "keywords";
+      fieldPath: string;
+      selectedText?: string;
+      fieldText: string;
+      resumeData: any;
+      targetContext?: string;
+    }) => {
+      return api.post<ApiResponse<{ replacementText: string; explanation?: string }>>(`/resume/builder/${sessionId}/command`, {
+        command,
+        fieldPath,
+        selectedText,
+        fieldText,
+        resumeData,
+        targetContext,
+      });
     },
   });
 };
@@ -274,6 +383,41 @@ export const useExportAnalysis = () => {
     },
     onSuccess: (data, id) => {
       triggerDownload(data.blob, data.contentDisposition || undefined, `Analysis_Report_${id}.pdf`);
+    }
+  });
+};
+
+export const useGenerateTemplates = () => {
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const response = await api.post<ApiResponse<{ templates: any[] }>>("/resume/builder/generate", { sessionId });
+      return response;
+    },
+  });
+};
+
+export const useDownloadTemplate = () => {
+  return useMutation({
+    mutationFn: async ({ sessionId, templateId, format }: { sessionId: string; templateId: string; format: "pdf" | "docx" }) => {
+      const base = process.env.NEXT_PUBLIC_API_URL || "";
+      const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+      const response = await fetch(`${normalizedBase}resume/builder/${sessionId}/download/${templateId}?format=${format}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error(`Failed to download ${format.toUpperCase()}`);
+
+      return {
+        blob: await response.blob(),
+        contentDisposition: response.headers.get("content-disposition"),
+        format,
+        templateId
+      };
+    },
+    onSuccess: (data) => {
+      const extension = data.format === "pdf" ? "pdf" : "docx";
+      triggerDownload(data.blob, data.contentDisposition || undefined, `Resume_${data.templateId}.${extension}`);
     }
   });
 };

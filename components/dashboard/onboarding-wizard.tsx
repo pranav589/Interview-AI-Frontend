@@ -149,12 +149,13 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
             {resumeUploaded ? (
               <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="flex flex-col items-center">
                 <CheckCircle className="w-12 h-12 text-emerald-500 mb-2" />
-                <p className="font-bold text-emerald-600">Resume Ready!</p>
+                <p className="font-bold text-emerald-600">Resume Uploaded!</p>
+                <p className="text-xs text-muted-foreground mt-1">Extraction will finish in the background.</p>
               </motion.div>
             ) : isUploading ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm font-medium">Analyzing experience...</p>
+                <p className="text-sm font-medium">Uploading resume...</p>
               </div>
             ) : (
               <div className="group-hover:scale-105 transition-transform duration-300">
