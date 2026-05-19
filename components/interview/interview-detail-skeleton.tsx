@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function InterviewDetailSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="px-4 py-8 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+      <div className="mx-auto">
         {/* Back button skeleton */}
         <div className="mb-8">
           <Skeleton className="h-9 w-32 rounded-lg" />

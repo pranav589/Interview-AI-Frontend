@@ -13,6 +13,7 @@ import { NotificationProvider } from "@/lib/notification-context";
 import { Navbar } from "@/components/common/navbar";
 import { AppleFooter } from "@/components/common/apple-footer";
 import { RouteContainer } from "@/components/common/route-container";
+import { SidebarProvider } from "@/components/common/sidebar-context";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -60,7 +61,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-};
+ };
 
 export default async function RootLayout({
   children,
@@ -123,17 +124,19 @@ export default async function RootLayout({
               <FeatureFlagsProvider>
                 <AuthProvider>
                   <NotificationProvider>
-                    <a
-                      href="#main-content"
-                      className="sr-only focus:not-sr-only focus:fixed focus:top-14 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-full focus:font-bold"
-                    >
-                      Skip to main content
-                    </a>
-                    <Navbar />
-                    <main id="main-content" className="min-h-screen">
-                      <RouteContainer>{children}</RouteContainer>
-                    </main>
-                    <AppleFooter />
+                    <SidebarProvider>
+                      <a
+                        href="#main-content"
+                        className="sr-only focus:not-sr-only focus:fixed focus:top-14 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-full focus:font-bold"
+                      >
+                        Skip to main content
+                      </a>
+                      <Navbar />
+                      <main id="main-content" className="min-h-screen">
+                        <RouteContainer>{children}</RouteContainer>
+                      </main>
+                      <AppleFooter />
+                    </SidebarProvider>
                   </NotificationProvider>
                 </AuthProvider>
               </FeatureFlagsProvider>
