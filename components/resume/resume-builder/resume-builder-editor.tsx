@@ -144,7 +144,7 @@ export function EditorMode({
       {/* Grid container with Tailwind responsive view toggles */}
       <div className="grid flex-1 grid-cols-1 lg:grid-cols-[minmax(420px,0.9fr)_minmax(420px,0.75fr)]">
         {/* Editor Form: Full width on mobile, split pane on desktop */}
-        <ScrollArea className="h-[calc(100vh-133px)] border-r-0 lg:border-r border-hairline bg-canvas w-full">
+        <ScrollArea className="h-[calc(100vh-133px)] border-r-0 lg:border-r border-hairline bg-canvas w-full block">
           <ResumeForm
             draft={draft}
             activeGhostField={activeGhostField}
