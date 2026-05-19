@@ -16,9 +16,8 @@ export function RouteContainer({ children }: RouteContainerProps) {
   const { isCollapsed } = useSidebar();
 
   const isLandingPage = pathname === "/";
-  const isFullWidthPage = pathname.startsWith("/resume/builder");
 
-  if (isLandingPage || isFullWidthPage) {
+  if (isLandingPage) {
     return <>{children}</>;
   }
 
