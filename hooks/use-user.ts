@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
@@ -86,6 +86,29 @@ export const useCompleteOnboarding = () => {
     },
     onError: (error: any) => {
       toast.error(MESSAGES.ONBOARDING.COMPLETE_FAILED, error);
+    },
+  });
+};
+
+export const useDashboardStats = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["dashboard-stats", user?.id],
+    queryFn: async () => {
+      const response = await api.get<{ data: any }>("user/dashboard-stats");
+      return response.data;
+    },
+    enabled: !!user,
+  });
+};
+
+export const useSuspenseDashboardStats = () => {
+  const { user } = useAuth();
+  return useSuspenseQuery({
+    queryKey: ["dashboard-stats", user?.id],
+    queryFn: async () => {
+      const response = await api.get<{ data: any }>("user/dashboard-stats");
+      return response.data;
     },
   });
 };

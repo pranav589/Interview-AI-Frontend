@@ -15,8 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import InterviewCard from "./interview-card";
+import dynamic from "next/dynamic";
 import { INTERVIEW_TYPES, DIFFICULTY_LEVELS } from "@/lib/constants";
-import { SampleReplay } from "./sample-replay";
+
+const SampleReplay = dynamic(
+  () => import("./sample-replay").then((mod) => mod.SampleReplay),
+  { ssr: false }
+);
 
 export function RecentInterviewsList() {
   const [page, setPage] = useState(1);

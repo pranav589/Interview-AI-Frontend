@@ -20,6 +20,11 @@ import {
   LayoutDashboard,
   ShieldCheck,
   FileText,
+  Sparkles,
+  Plus,
+  FileCheck,
+  FolderHeart,
+  Coins,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
@@ -30,7 +35,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import { NotificationBell } from "./notification-bell";
 import { SUBSCRIPTION_TIERS, DEFAULT_FREE_CREDITS } from "@/lib/constants";
 
@@ -45,6 +52,60 @@ export function Navbar() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const sections = [
+    {
+      title: "Overview",
+      items: [
+        {
+          name: "Dashboard",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+        },
+        {
+          name: "Mock Interview",
+          href: "/interview-setup",
+          icon: Sparkles,
+          badge: "New",
+        },
+      ],
+    },
+    {
+      title: "Resume Hub",
+      items: [
+        {
+          name: "Resume Builder",
+          href: "/resume/builder",
+          icon: Plus,
+        },
+        {
+          name: "ATS Analyzer",
+          href: "/resume/analyzer",
+          icon: FileText,
+        },
+        {
+          name: "JD Matcher",
+          href: "/resume/jd-match",
+          icon: FileCheck,
+        },
+        {
+          name: "Resume Vault",
+          href: "/resume/vault",
+          icon: FolderHeart,
+        },
+      ],
+    },
+    {
+      title: "Account",
+      items: [
+        {
+          name: "Settings & Security",
+          href: "/dashboard/settings",
+          icon: Settings,
+        },
+      ],
+    },
+  ];
 
   if (pathname === "/") {
     return null;
@@ -61,7 +122,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full h-[52px] border-b border-hairline bg-parchment/80 backdrop-blur-xl saturate-[180%] transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex justify-between items-center h-full">
           <Link
             href={isLoggedIn ? "/dashboard" : "/"}
@@ -115,36 +176,6 @@ export function Navbar() {
             {isLoggedIn ? (
               <>
                 <div className="hidden md:flex items-center gap-4">
-                  <Link href="/dashboard">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-caption text-ink/70 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                    >
-                      Dashboard
-                    </Button>
-                  </Link>
-
-                  <Link href="/resume">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-caption text-ink/70 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                    >
-                      Resume Hub
-                    </Button>
-                  </Link>
-
-                  <Link href="/resume/vault">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-caption text-ink/70 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                    >
-                      Resume Vault
-                    </Button>
-                  </Link>
-
                   <NotificationBell />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -204,59 +235,89 @@ export function Navbar() {
                     </SheetTrigger>
                     <SheetContent
                       side="right"
-                      className="w-[280px] p-0 border-l border-hairline bg-parchment/95 backdrop-blur-xl"
+                      className="w-[280px] p-0 border-l border-hairline bg-parchment/95 backdrop-blur-xl flex flex-col h-full"
                     >
-                      <SheetHeader className="p-6 text-left border-b border-hairline">
+                      <SheetHeader className="p-6 text-left border-b border-hairline shrink-0">
                         <SheetTitle className="text-left text-ink text-tagline font-semibold tracking-tight">
                           Navigation
                         </SheetTitle>
                       </SheetHeader>
-                      <div className="flex flex-col gap-1 py-6 px-4">
-                        <Link href="/dashboard" className="w-full">
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                          >
-                            <LayoutDashboard className="w-5 h-5" />
-                            Dashboard
-                          </Button>
-                        </Link>
-                        <Link href="/resume" className="w-full">
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                          >
-                            <FileText className="w-5 h-5" />
-                            Resume Hub
-                          </Button>
-                        </Link>
-                        <Link href="/resume/vault" className="w-full">
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                          >
-                            <FileText className="w-5 h-5" />
-                            Resume Vault
-                          </Button>
-                        </Link>
-                        <Link href="/dashboard/settings" className="w-full">
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start gap-3 h-12 text-caption text-ink/80 hover:text-ink hover:bg-ink/5 active:scale-95 rounded-pill"
-                          >
-                            <ShieldCheck className="w-5 h-5" />
-                            Settings & Security
-                          </Button>
-                        </Link>
-                        <div className="pt-4 mt-4 border-t border-hairline">
-                          <Button
-                            variant="ghost"
-                            onClick={handleLogout}
-                            className="w-full justify-start h-12 gap-3 text-caption text-destructive hover:text-destructive hover:bg-destructive/5 active:scale-95 rounded-pill"
-                          >
-                            <LogOut className="w-5 h-5" />
-                            Logout
-                          </Button>
+                      <div className="flex-1 flex flex-col gap-6 overflow-y-auto py-6 px-4 scrollbar-none">
+                        {sections.map((section) => (
+                          <div key={section.title} className="flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-ink/40 px-3">
+                              {section.title}
+                            </span>
+                            <div className="space-y-[4px]">
+                              {section.items.map((item) => {
+                                const Icon = item.icon;
+                                const isActive =
+                                  pathname === item.href ||
+                                  pathname.startsWith(item.href + "/");
+
+                                return (
+                                  <SheetClose asChild key={item.name}>
+                                    <Link href={item.href} className="block w-full">
+                                      <Button
+                                        variant="ghost"
+                                        className={cn(
+                                          "w-full justify-start gap-3 h-11 text-[13px] font-medium active:scale-95 rounded-lg transition-all duration-200",
+                                          isActive
+                                            ? "text-primary bg-primary/5 font-semibold animate-pulse-slow"
+                                            : "text-ink/60 hover:text-ink hover:bg-ink/5"
+                                        )}
+                                      >
+                                        <Icon className={cn("w-4.5 h-4.5", isActive ? "text-primary" : "text-ink/40")} />
+                                        <span>{item.name}</span>
+                                        {item.badge && (
+                                          <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wider">
+                                            {item.badge}
+                                          </span>
+                                        )}
+                                      </Button>
+                                    </Link>
+                                  </SheetClose>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Remaining Credits & Plan info inside mobile Drawer */}
+                        <div className="bg-ink/5 dark:bg-white/5 rounded-xl p-3.5 border border-hairline flex flex-col gap-1.5 relative overflow-hidden mt-auto shrink-0">
+                          <div className="absolute top-0 right-0 p-3 opacity-10">
+                            <Coins className="w-10 h-10 text-primary" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Coins className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-ink/50">
+                              Credits Remaining
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl font-bold tracking-tight text-ink">
+                              {user?.credits !== undefined ? user.credits : 0}
+                            </span>
+                            <span className="text-[10px] text-ink/40 font-normal">
+                              credits
+                            </span>
+                          </div>
+                          <div className="text-[10px] font-medium text-ink-muted-48">
+                            {user?.subscriptionTier || "Free Tier"} Plan
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-hairline shrink-0">
+                          <SheetClose asChild>
+                            <Button
+                              variant="ghost"
+                              onClick={handleLogout}
+                              className="w-full justify-start h-11 gap-3 text-[13px] font-medium text-destructive hover:text-destructive hover:bg-destructive/5 active:scale-95 rounded-lg"
+                            >
+                              <LogOut className="w-4.5 h-4.5" />
+                              Logout
+                            </Button>
+                          </SheetClose>
                         </div>
                       </div>
                     </SheetContent>

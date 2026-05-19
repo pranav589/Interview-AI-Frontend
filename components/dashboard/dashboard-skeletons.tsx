@@ -1,22 +1,99 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function StatsSkeleton() {
+interface StatsSkeletonProps {
+  mode?: "interview" | "resume" | "both";
+}
+
+export function StatsSkeleton({ mode = "both" }: StatsSkeletonProps = {}) {
+  const isSingleMode = mode === "interview" || mode === "resume";
+
+  const renderInterviewSkeleton = () => (
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500/50" />
+          <Skeleton className="h-4 w-36" />
+        </div>
+      </div>
+      <div
+        className={
+          isSingleMode
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            : "grid grid-cols-2 gap-4"
+        }
+      >
+        {Array(4)
+          .fill(0)
+          .map((_, i) => (
+            <Card
+              key={i}
+              className="overflow-hidden border-primary/5 bg-parchment/40 dark:bg-ink/10"
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-5">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-8 rounded-lg" />
+              </CardHeader>
+              <CardContent className="p-5 pt-0">
+                <Skeleton className="h-9 w-20" />
+                <Skeleton className="h-3 w-28 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+      </div>
+    </div>
+  );
+
+  const renderResumeSkeleton = () => (
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-500/50" />
+          <Skeleton className="h-4 w-44" />
+        </div>
+      </div>
+      <div
+        className={
+          isSingleMode
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            : "grid grid-cols-2 gap-4"
+        }
+      >
+        {Array(4)
+          .fill(0)
+          .map((_, i) => (
+            <Card
+              key={i}
+              className="overflow-hidden border-primary/5 bg-parchment/40 dark:bg-ink/10"
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-5">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-8 w-8 rounded-lg" />
+              </CardHeader>
+              <CardContent className="p-5 pt-0">
+                <Skeleton className="h-9 w-20" />
+                <Skeleton className="h-3 w-28 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+      </div>
+    </div>
+  );
+
+  if (isSingleMode) {
+    return (
+      <div className="mb-8">
+        {mode === "interview"
+          ? renderInterviewSkeleton()
+          : renderResumeSkeleton()}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {Array(4)
-        .fill(0)
-        .map((_, i) => (
-          <Card key={i} className="overflow-hidden border-primary/5">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-8 rounded-lg" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-10 w-16" />
-            </CardContent>
-          </Card>
-        ))}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      {renderInterviewSkeleton()}
+      {renderResumeSkeleton()}
     </div>
   );
 }
@@ -76,20 +153,20 @@ export function ChartsSkeleton() {
 }
 
 export function DashboardHeaderSkeleton() {
-    return (
-        <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-            <div className="space-y-2">
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-6 w-96" />
-            </div>
-            <Skeleton className="h-12 w-48 rounded-xl" />
-        </div>
-    );
+  return (
+    <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-6 w-96" />
+      </div>
+      <Skeleton className="h-12 w-48 rounded-xl" />
+    </div>
+  );
 }
 
 export function DashboardSkeleton() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto">
       <DashboardHeaderSkeleton />
       <StatsSkeleton />
       <ChartsSkeleton />
@@ -97,3 +174,25 @@ export function DashboardSkeleton() {
     </div>
   );
 }
+
+export function DashboardTabContainerSkeleton() {
+  return (
+    <div className="space-y-10 w-full animate-pulse">
+      {/* Sliding tabs toggle skeleton */}
+      <div className="flex justify-center">
+        <div className="w-full max-w-md h-12 bg-parchment/40 dark:bg-ink/10 border border-hairline rounded-full flex items-center p-1 gap-1">
+          <div className="flex-1 h-full bg-white dark:bg-indigo-500/30 rounded-full" />
+          <div className="flex-1 h-full bg-transparent" />
+        </div>
+      </div>
+      
+      {/* Stats, charts, and list grids skeletons */}
+      <div className="space-y-16">
+        <StatsSkeleton mode="both" />
+        <ChartsSkeleton />
+        <InterviewsListSkeleton />
+      </div>
+    </div>
+  );
+}
+
