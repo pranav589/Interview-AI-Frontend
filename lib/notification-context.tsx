@@ -49,6 +49,45 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         try {
           const payload = JSON.parse(event.data);
           
+          if (payload.type === "JOB_UPDATED") {
+            const job = payload.data;
+            if (job?._id) {
+              queryClient.setQueryData(["resume-job", job._id], job);
+              queryClient.setQueryData(["builder-job", job._id], job);
+              queryClient.invalidateQueries({ queryKey: ["resumes"] });
+
+              if (job.status === "completed" || job.status === "failed") {
+                if (job.resultRef?.analysisId) {
+                  queryClient.invalidateQueries({ queryKey: ["resume-analysis", job.resultRef.analysisId] });
+                  queryClient.invalidateQueries({ queryKey: ["resume-analyses"] });
+                }
+                if (job.resultRef?.jdMatchId) {
+                  queryClient.invalidateQueries({ queryKey: ["jd-match", job.resultRef.jdMatchId] });
+                  queryClient.invalidateQueries({ queryKey: ["jd-matches"] });
+                }
+                if (job.resultRef?.generatedResumeId) {
+                  queryClient.invalidateQueries({ queryKey: ["builder-session", job.resultRef.generatedResumeId] });
+                }
+              }
+
+              if (job.status === "completed") {
+                let msg = "Processing completed successfully.";
+                if (job.jobType === "resume-extraction") msg = "Resume details extracted successfully!";
+                if (job.jobType === "resume-analysis") msg = "Resume analysis completed successfully!";
+                if (job.jobType === "jd-match") msg = "Job description match completed!";
+                if (job.jobType === "builder-export") msg = "Resume exported successfully!";
+
+                toast.success(msg, {
+                  id: `job-completed-${job._id}`,
+                });
+              } else if (job.status === "failed") {
+                toast.error(job.error || "Processing failed.", {
+                  id: `job-failed-${job._id}`,
+                });
+              }
+            }
+          }
+
           if (payload.type === "notification:new") {
             const newNotification = payload.data;
             

@@ -56,14 +56,6 @@ export const useResumes = () => {
       const response = await api.get<ApiResponse<Resume[]>>("/resume");
       return response.data;
     },
-    refetchInterval: (query) => {
-      const hasPending = query.state.data?.some(
-        (r) =>
-          r.extractionStatus === "pending" ||
-          r.extractionStatus === "processing",
-      );
-      return hasPending ? 4000 : false;
-    },
   });
 };
 
@@ -73,14 +65,6 @@ export const useSuspenseResumes = () => {
     queryFn: async () => {
       const response = await api.get<ApiResponse<Resume[]>>("/resume");
       return response.data;
-    },
-    refetchInterval: (query) => {
-      const hasPending = query.state.data?.some(
-        (r) =>
-          r.extractionStatus === "pending" ||
-          r.extractionStatus === "processing",
-      );
-      return hasPending ? 4000 : false;
     },
   });
 };
@@ -143,12 +127,6 @@ export const useResumeJob = (jobId?: string) => {
       );
       return response.data;
     },
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (!status || status === "queued" || status === "processing")
-        return 4000;
-      return false;
-    },
   });
 };
 
@@ -176,12 +154,6 @@ export const useBuilderJob = (jobId?: string) => {
         `/resume/jobs/${jobId}`,
       );
       return response.data;
-    },
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (!status || status === "queued" || status === "processing")
-        return 5000;
-      return false;
     },
   });
 };
