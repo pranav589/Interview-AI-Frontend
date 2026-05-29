@@ -35,13 +35,13 @@ export function DashboardTabContainer() {
               value="interview"
               className={cn(
                 "relative flex-1 h-full rounded-full text-sm font-semibold tracking-tight text-ink-muted-48 dark:text-ink/60 transition-colors duration-300 z-10 border-none bg-transparent hover:text-ink select-none focus-visible:ring-0 focus-visible:outline-none",
-                activeTab === "interview" && "text-indigo-600 dark:text-white"
+                activeTab === "interview" && "text-primary dark:text-white"
               )}
             >
               {activeTab === "interview" && (
                 <motion.div
                   layoutId="activeTabBackground"
-                  className="absolute inset-0 bg-white dark:bg-indigo-500 rounded-full shadow-sm -z-10 border border-hairline/10 dark:border-none"
+                  className="absolute inset-0 bg-white dark:bg-primary rounded-full shadow-sm -z-10 border border-hairline/10 dark:border-none"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
@@ -54,13 +54,13 @@ export function DashboardTabContainer() {
               value="resume"
               className={cn(
                 "relative flex-1 h-full rounded-full text-sm font-semibold tracking-tight text-ink-muted-48 dark:text-ink/60 transition-colors duration-300 z-10 border-none bg-transparent hover:text-ink select-none focus-visible:ring-0 focus-visible:outline-none",
-                activeTab === "resume" && "text-indigo-600 dark:text-white"
+                activeTab === "resume" && "text-primary dark:text-white"
               )}
             >
               {activeTab === "resume" && (
                 <motion.div
                   layoutId="activeTabBackground"
-                  className="absolute inset-0 bg-white dark:bg-indigo-500 rounded-full shadow-sm -z-10 border border-hairline/10 dark:border-none"
+                  className="absolute inset-0 bg-white dark:bg-primary rounded-full shadow-sm -z-10 border border-hairline/10 dark:border-none"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}

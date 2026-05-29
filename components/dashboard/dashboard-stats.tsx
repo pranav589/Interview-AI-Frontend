@@ -197,13 +197,13 @@ export function DashboardStats({ mode = "both" }: DashboardStatsProps) {
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-500" />
+          <span className="flex h-2.5 w-2.5 rounded-full bg-primary" />
           <h3 className="text-sm font-semibold uppercase tracking-wider text-ink/65 dark:text-ink/80">
             Resume Hub & ATS Scores
           </h3>
         </div>
         {resumeStats.totalResumes > 0 && (
-          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-primary uppercase tracking-wider flex items-center gap-1">
+          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase tracking-wider flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             ATS Sync Active
           </span>
