@@ -29,7 +29,7 @@ export function RecentInterviewsList() {
   const [difficulty, setDifficulty] = useState("all");
 
   const {
-      data: interviewsResponse,
+    data: interviewsResponse,
   } = useSuspenseInterviews({
     page,
     limit: 5,
@@ -149,14 +149,14 @@ export function RecentInterviewsList() {
               ) : (
                 <div className="space-y-12 w-full max-w-4xl mx-auto">
                   <Link href="/interview-setup">
-                    <Button className="gap-2 h-12 px-8 font-bold text-lg">
+                    <Button className="gap-2 h-12 px-8 font-semibold text-white text-lg">
                       <Plus className="w-5 h-5" />
                       Create Your First Interview
                     </Button>
                   </Link>
 
                   <div className="space-y-6">
-                    <div className="flex items-center gap-3 justify-center text-muted-foreground mb-4">
+                    <div className="flex items-center mt-2 gap-3 justify-center text-muted-foreground mb-4">
                       <div className="h-[1px] w-12 bg-border" />
                       <span className="text-[10px] font-bold uppercase tracking-widest">
                         See how it works
