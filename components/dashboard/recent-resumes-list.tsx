@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  FileText, 
-  Upload, 
-  Loader2, 
-  CheckCircle2, 
-  Star, 
-  Award, 
-  Zap, 
-  Sparkles, 
+import {
+  FileText,
+  Upload,
+  Loader2,
+  CheckCircle2,
+  Star,
+  Award,
+  Zap,
+  Sparkles,
   ArrowRight,
   Database,
   Search,
@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
   completed: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  processing: "border-indigo-500/20 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400",
+  processing: "border-primary/20 bg-primary/10 text-primary dark:text-primary-foreground",
   pending: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   failed: "border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-400",
 };
@@ -127,28 +127,34 @@ export function RecentResumesList() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className={cn(
-            "h-11 rounded-full bg-indigo-500 px-5 text-white hover:bg-indigo-600 text-sm flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-sm shadow-indigo-500/10 font-semibold",
-            uploadMutation.isPending && "opacity-80 pointer-events-none"
-          )}>
-            <Input
-              type="file"
-              className="hidden"
-              accept=".pdf"
-              onChange={handleFileUpload}
-              disabled={uploadMutation.isPending}
-            />
-            {uploadMutation.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="mr-2 h-4 w-4" />
+          <Button
+            asChild
+            className={cn(
+              "h-11 rounded-full px-5 text-sm font-semibold shadow-sm text-white",
+              uploadMutation.isPending && "opacity-80 pointer-events-none"
             )}
-            Upload Resume
-          </label>
+            disabled={uploadMutation.isPending}
+          >
+            <label className="cursor-pointer flex items-center justify-center gap-2">
+              <Input
+                type="file"
+                className="hidden"
+                accept=".pdf"
+                onChange={handleFileUpload}
+                disabled={uploadMutation.isPending}
+              />
+              {uploadMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              Upload Resume
+            </label>
+          </Button>
 
           <Link href="/resume/vault">
             <Button variant="outline" className="h-11 rounded-full bg-secondary border-hairline font-semibold gap-2 px-5">
-              <Database className="w-4 h-4 text-indigo-500" />
+              <Database className="w-4 h-4 text-primary" />
               Manage Vault
             </Button>
           </Link>
@@ -163,8 +169,8 @@ export function RecentResumesList() {
               animate={{ scale: 1, opacity: 1 }}
               className="flex flex-col items-center"
             >
-              <div className="w-16 h-16 bg-indigo-500/5 rounded-full flex items-center justify-center mb-6">
-                <FileText className="w-8 h-8 text-indigo-500/40 animate-pulse" />
+              <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-6">
+                <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
               </div>
               <h3 className="text-xl font-bold mb-2">
                 Your Resume Vault is empty
@@ -172,25 +178,31 @@ export function RecentResumesList() {
               <p className="text-muted-foreground mb-8 max-w-md mx-auto text-sm leading-relaxed px-4">
                 Upload your resume in PDF format to evaluate ATS readability, run custom JD target matching audit, or build dynamic profile versions.
               </p>
-              
-              <label className={cn(
-                "h-12 rounded-pill bg-indigo-500 px-8 text-white hover:bg-indigo-600 text-base flex items-center justify-center cursor-pointer transition-all active:scale-95 shadow-lg shadow-indigo-500/10 font-bold",
-                uploadMutation.isPending && "opacity-80 pointer-events-none"
-              )}>
-                <Input
-                  type="file"
-                  className="hidden"
-                  accept=".pdf"
-                  onChange={handleFileUpload}
-                  disabled={uploadMutation.isPending}
-                />
-                {uploadMutation.isPending ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                ) : (
-                  <Plus className="mr-2 h-5 w-5" />
+
+              <Button
+                asChild
+                className={cn(
+                  "h-12 rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10 text-white",
+                  uploadMutation.isPending && "opacity-80 pointer-events-none"
                 )}
-                Upload Your First Resume
-              </label>
+                disabled={uploadMutation.isPending}
+              >
+                <label className="cursor-pointer flex items-center justify-center gap-2">
+                  <Input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    disabled={uploadMutation.isPending}
+                  />
+                  {uploadMutation.isPending ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Plus className="h-5 w-5" />
+                  )}
+                  Upload Your First Resume
+                </label>
+              </Button>
             </motion.div>
           </div>
         ) : (
@@ -208,33 +220,33 @@ export function RecentResumesList() {
                     transition={{ delay: index * 0.05 }}
                   >
                     <Card className={cn(
-                      "border-hairline bg-parchment/40 dark:bg-ink/10 backdrop-blur-xl transition-all group relative overflow-hidden select-none hover:shadow-md hover:border-indigo-500/20",
-                      resume.isDefault && "border-indigo-500/30 bg-white/70 dark:bg-ink/20"
+                      "border-hairline bg-parchment/40 dark:bg-ink/10 backdrop-blur-xl transition-all group relative overflow-hidden select-none hover:shadow-md hover:border-primary/20",
+                      resume.isDefault && "border-primary/30 bg-white/70 dark:bg-ink/20"
                     )}>
                       <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
                         <div className="flex items-start gap-4">
                           <div className={cn(
                             "w-12 h-12 rounded-xl flex items-center justify-center transition-colors flex-shrink-0",
-                            resume.isDefault 
-                              ? "bg-indigo-500 text-white" 
-                              : "bg-indigo-500/5 text-indigo-500 dark:bg-indigo-500/10"
+                            resume.isDefault
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-primary/5 text-primary dark:bg-primary/10"
                           )}>
                             <FileText className="w-6 h-6" />
                           </div>
-                          
+
                           <div className="space-y-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="font-semibold text-base tracking-tight text-ink line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                              <h3 className="font-semibold text-base tracking-tight text-ink line-clamp-1 group-hover:text-primary transition-colors">
                                 {resume.name}
                               </h3>
                               {resume.isDefault && (
-                                <Badge className="bg-indigo-500/10 hover:bg-indigo-500/15 text-indigo-500 border-none font-semibold text-[10px] uppercase tracking-wider py-0.5 px-2.5 rounded-full flex items-center gap-1">
+                                <Badge className="bg-primary/10 hover:bg-primary/15 text-primary border-none font-semibold text-[10px] uppercase tracking-wider py-0.5 px-2.5 rounded-full flex items-center gap-1">
                                   <CheckCircle2 className="w-3.5 h-3.5" />
                                   Default
                                 </Badge>
                               )}
                             </div>
-                            
+
                             <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
                               <span>Saved {formatDate(resume.updatedAt || resume.createdAt)}</span>
                               <span className="text-hairline">•</span>
@@ -248,16 +260,16 @@ export function RecentResumesList() {
                         <div className="flex items-center flex-wrap gap-2.5 md:self-center">
                           {/* Set Default Toggle */}
                           {!resume.isDefault && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={(e) => handleSetDefault(resume, e)}
                               disabled={setDefaultMutation.isPending}
-                              className="rounded-full text-xs font-semibold gap-1.5 h-9 text-muted-foreground hover:text-indigo-500 transition-colors"
+                              className="rounded-full text-xs font-semibold gap-1.5 h-9 text-muted-foreground hover:text-primary transition-colors"
                               title="Set as Default Resume"
                             >
                               {isUpdating ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-500" />
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
                               ) : (
                                 <Star className="w-3.5 h-3.5" />
                               )}
@@ -284,7 +296,7 @@ export function RecentResumesList() {
                           {/* Open Builder CTA */}
                           <Link href={`/resume/builder?resumeId=${resume._id}`}>
                             <Button variant="secondary" size="sm" className="rounded-full text-xs font-semibold gap-1.5 h-9 bg-parchment/60 hover:bg-parchment/100 dark:bg-ink/20 dark:hover:bg-ink/30 border border-hairline">
-                              <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                              <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
                               AI Editor
                             </Button>
                           </Link>
@@ -299,7 +311,7 @@ export function RecentResumesList() {
             {resumes.length > 3 && (
               <div className="flex justify-center pt-2">
                 <Link href="/resume/vault">
-                  <Button variant="ghost" className="text-sm font-semibold text-indigo-500 gap-1.5 hover:bg-indigo-500/5 rounded-full px-6 py-2">
+                  <Button variant="ghost" className="text-sm font-semibold text-primary gap-1.5 hover:bg-primary/5 rounded-full px-6 py-2">
                     View remaining {resumes.length - 3} resume{resumes.length - 3 === 1 ? "" : "s"} in Vault
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Button>

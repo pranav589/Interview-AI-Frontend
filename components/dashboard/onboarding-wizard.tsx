@@ -10,12 +10,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { 
-  Rocket, 
-  ChevronRight, 
-  ChevronLeft, 
-  Upload, 
-  CheckCircle, 
+import {
+  Rocket,
+  ChevronRight,
+  ChevronLeft,
+  Upload,
+  CheckCircle,
   ArrowRight,
   ShieldCheck,
   Brain,
@@ -102,9 +102,9 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
       content: (
         <div className="space-y-6 py-6 text-center">
           <div className="flex justify-center mb-4">
-             <div className="p-4 bg-primary/10 rounded-full">
-                <Brain className="w-16 h-16 text-primary" />
-             </div>
+            <div className="p-4 bg-primary/10 rounded-full">
+              <Brain className="w-16 h-16 text-primary" />
+            </div>
           </div>
           <div className="space-y-2">
             <h4 className="text-xl font-bold">Your AI Journey Starts Here</h4>
@@ -139,9 +139,9 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
       content: (
         <div className="space-y-6 py-8">
           <div className="border-2 border-dashed rounded-2xl p-10 text-center space-y-4 hover:border-primary/50 transition-colors cursor-pointer relative overflow-hidden group">
-            <input 
-              type="file" 
-              className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+            <input
+              type="file"
+              className="absolute inset-0 opacity-0 cursor-pointer z-10"
               accept=".pdf"
               onChange={handleFileUpload}
               disabled={isUploading || resumeUploaded}
@@ -168,8 +168,8 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground justify-center hover:text-foreground cursor-pointer" onClick={handleNext}>
-             <p>I'll do this later</p>
-             <ArrowRight className="w-3 h-3" />
+            <p>I'll do this later</p>
+            <ArrowRight className="w-3 h-3" />
           </div>
         </div>
       )
@@ -181,23 +181,23 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
       icon: <Target className="w-12 h-12 text-primary" />,
       content: (
         <div className="grid grid-cols-1 gap-4 py-6">
-            {INTERVIEW_TYPES.map((type, i) => (
-              <motion.div 
-                key={type.id}
-                whileHover={{ x: 5, backgroundColor: 'rgba(var(--primary-rgb), 0.05)' }}
-                className="p-4 border rounded-xl flex items-center gap-4 cursor-pointer transition-colors group"
-                onClick={() => handleTypeSelect(type.id)}
-              >
-                <div className="text-2xl w-12 h-12 flex items-center justify-center bg-muted rounded-full group-hover:bg-primary/10 transition-colors">
-                   {type.id === 'technical' ? '💻' : type.id === 'behavioral' ? '🤝' : '🏗️'}
-                </div>
-                <div>
-                  <p className="font-bold">{type.label}</p>
-                  <p className="text-xs text-muted-foreground">{type.description}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.div>
-            ))}
+          {INTERVIEW_TYPES.map((type, i) => (
+            <motion.div
+              key={type.id}
+              whileHover={{ x: 5, backgroundColor: 'rgba(var(--primary-rgb), 0.05)' }}
+              className="p-4 border rounded-xl flex items-center gap-4 cursor-pointer transition-colors group"
+              onClick={() => handleTypeSelect(type.id)}
+            >
+              <div className="text-2xl w-12 h-12 flex items-center justify-center bg-muted rounded-full group-hover:bg-primary/10 transition-colors">
+                {type.id === 'technical' ? '💻' : type.id === 'behavioral' ? '🤝' : '🏗️'}
+              </div>
+              <div>
+                <p className="font-bold">{type.label}</p>
+                <p className="text-xs text-muted-foreground">{type.description}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.div>
+          ))}
         </div>
       )
     },
@@ -209,28 +209,28 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
       content: (
         <div className="space-y-8 py-8 text-center">
           <div className="relative">
-             <div className="w-32 h-32 bg-primary/20 rounded-full mx-auto flex items-center justify-center">
-                <Rocket className="w-16 h-16 text-primary animate-bounce" />
-             </div>
-             <motion.div 
-               animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-               transition={{ duration: 2, repeat: Infinity }}
-               className="absolute inset-0 bg-primary/10 rounded-full"
-             />
+            <div className="w-32 h-32 bg-primary/20 rounded-full mx-auto flex items-center justify-center">
+              <Rocket className="w-16 h-16 text-primary animate-bounce" />
+            </div>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-primary/10 rounded-full"
+            />
           </div>
           <div className="space-y-4">
-             <h4 className="text-2xl font-black italic tracking-tighter uppercase">Clear for Takeoff</h4>
-             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-               You can now start your first practice session. Remember to be in a quiet place and use high-quality audio.
-             </p>
+            <h4 className="text-2xl font-black italic tracking-tighter uppercase">Clear for Takeoff</h4>
+            <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+              You can now start your first practice session. Remember to be in a quiet place and use high-quality audio.
+            </p>
           </div>
           <div className="flex flex-col gap-3">
-            <Button size="lg" className="w-full h-14 text-lg font-bold gap-2" onClick={startFirstInterview}>
-               <PlayCircle className="w-5 h-5" />
-               Start First Interview
+            <Button size="lg" className="w-full text-white h-14 text-lg font-semibold gap-2" onClick={startFirstInterview}>
+              <PlayCircle className="w-5 h-5" />
+              Start First Interview
             </Button>
             <Button variant="ghost" onClick={onClose} className="text-muted-foreground">
-               I'll explore the dashboard first
+              I'll explore the dashboard first
             </Button>
           </div>
         </div>
@@ -244,12 +244,12 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
     <Dialog open={isOpen} onOpenChange={(v) => !isUploading && onClose()}>
       <DialogContent className="sm:max-w-xl p-0 overflow-hidden border-none shadow-2xl bg-background">
         <div className="relative h-2 w-full bg-muted">
-           <motion.div 
-             className="absolute top-0 left-0 h-full bg-primary"
-             animate={{ width: `${(step / steps.length) * 100}%` }}
-           />
+          <motion.div
+            className="absolute top-0 left-0 h-full bg-primary"
+            animate={{ width: `${(step / steps.length) * 100}%` }}
+          />
         </div>
-        
+
         <div className="p-8">
           <AnimatePresence mode="wait">
             <motion.div
@@ -261,8 +261,8 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
               className="space-y-4"
             >
               <DialogHeader className="text-left">
-                <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-3">
-                   {currentStep.title}
+                <DialogTitle className="text-2xl font-black font-semibold tracking-tight flex items-center gap-3">
+                  {currentStep.title}
                 </DialogTitle>
                 <DialogDescription className="text-base">
                   {currentStep.description}
@@ -287,7 +287,7 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
                   <Button
                     onClick={handleNext}
                     disabled={isUploading}
-                    className="gap-2 px-8"
+                    className="gap-2 px-8 text-white"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />
