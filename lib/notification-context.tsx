@@ -5,34 +5,28 @@ import { useAuth } from "./auth-context";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
-import Link from "next/link";
 
 interface NotificationContextType {
-  socket: WebSocket | null;
+  eventSource: EventSource | null;
 }
 
-const NotificationContext = createContext<NotificationContextType>({ socket: null });
+const NotificationContext = createContext<NotificationContextType>({ eventSource: null });
 
 export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoggedIn } = useAuth();
-  const socketRef = useRef<WebSocket | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const queryClient = useQueryClient();
-
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastToastedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
 
     if (!isLoggedIn || !user) {
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
       return;
     }
@@ -40,15 +34,23 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const connect = () => {
       if (!isActive) return;
 
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001";
-      const socket = new WebSocket(`${wsUrl}?context=global_notifications`);
-      socketRef.current = socket;
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+      const sseUrl = `${apiBaseUrl.replace(/\/$/, "")}/notifications/stream`;
 
-      socket.onmessage = (event) => {
+      // Establish EventSource with credentials (to send cookies natively)
+      const eventSource = new EventSource(sseUrl, { withCredentials: true });
+      eventSourceRef.current = eventSource;
+
+      eventSource.onmessage = (event) => {
         if (!isActive) return;
         try {
           const payload = JSON.parse(event.data);
           
+          if (payload.connected) {
+            console.log("SSE notifications connection active");
+            return;
+          }
+
           if (payload.type === "JOB_UPDATED") {
             const job = payload.data;
             if (job?._id) {
@@ -137,18 +139,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       };
 
-      socket.onclose = () => {
-        if (isActive && isLoggedIn) {
-          // Invalidate to sync any missed events during disconnect
+      eventSource.onerror = (err) => {
+        console.error("Notification EventSource error:", err);
+        if (isActive) {
+          // Sync any potentially missed notifications while disconnected/reconnecting
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (isActive) connect();
-          }, 5000);
         }
-      };
-
-      socket.onerror = (err) => {
-        console.error("Notification socket error:", err);
       };
     };
 
@@ -156,18 +152,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     return () => {
       isActive = false;
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
     };
   }, [isLoggedIn, user?.id, queryClient]);
 
   return (
-    <NotificationContext.Provider value={{ socket: socketRef.current }}>
+    <NotificationContext.Provider value={{ eventSource: eventSourceRef.current }}>
       {children}
     </NotificationContext.Provider>
   );
