@@ -188,8 +188,8 @@ export default function SettingsPageClient() {
             </CardContent>
           </Card>
 
-          {/* 2. Employer Profile (Only visible if Employer) */}
-          {user?.role === "employer" && (
+          {/* 2. Employer Profile (Only visible if Employer or other non-candidate role) */}
+          {user?.role !== "candidate" && (
             <Card className="border-2">
               <CardHeader className="flex flex-row items-center gap-4 space-y-0">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -197,10 +197,18 @@ export default function SettingsPageClient() {
                 </div>
                 <div>
                   <CardTitle className="text-2xl font-bold">
-                    Company Profile
+                    {user?.role === "admin"
+                      ? "Settings & Company Profile"
+                      : user?.role === "employer"
+                      ? "Company Profile"
+                      : "Interviewer Settings"}
                   </CardTitle>
                   <CardDescription>
-                    Configure company details used to prefill interview invitations
+                    {user?.role === "admin"
+                      ? "Configure company details and default AI interviewer name used for invitations and practice"
+                      : user?.role === "employer"
+                      ? "Configure company details used to prefill interview invitations"
+                      : "Configure the default AI interviewer name and practice company settings"}
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -249,7 +257,13 @@ export default function SettingsPageClient() {
                         placeholder="AI Assistant"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">This is the name the AI interviewer will use to introduce itself and greet candidates.</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user?.role === "admin"
+                        ? "This is the name the AI interviewer will use to introduce itself to candidates and in practice sessions."
+                        : user?.role === "employer"
+                        ? "This is the name the AI interviewer will use to introduce itself and greet candidates."
+                        : "This is the name the AI interviewer will use during your practice sessions."}
+                    </p>
                   </div>
                 </div>
 
@@ -264,8 +278,10 @@ export default function SettingsPageClient() {
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
                         Saving...
                       </>
-                    ) : (
+                    ) : user?.role === "employer" ? (
                       "Save Company Details"
+                    ) : (
+                      "Save Settings"
                     )}
                   </Button>
                 </div>

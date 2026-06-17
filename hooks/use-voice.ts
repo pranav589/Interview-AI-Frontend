@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback, useState } from "react";
 
 // Align with backend TranscriptionProvider minTurnSilence (2000ms) + buffer.
 // We keep audio flowing for 8s of silence so AssemblyAI never sees a gap and force-finalizes early.
-const THINKING_PAUSE_MS = 8000;
+const THINKING_PAUSE_MS = 6000;
 const SILENCE_SEND_INTERVAL_MS = 500; // send a keepalive chunk every 500ms during silence
 
 // 3200 bytes of silence at 16kHz mono = 100ms of audio.
@@ -24,6 +24,7 @@ export const useVoice = (
   const analyserRef = useRef<AnalyserNode | null>(null);
   const lastVoiceTimeRef = useRef<number>(Date.now());
   const lastSilenceSendAtRef = useRef<number>(0);
+  const isSilentSentRef = useRef<boolean>(true);
 
   // Ref-based AI-speaking guard, controlled imperatively by the parent component
   // via `setAISpeaking`. Avoids the React re-render lag that caused the echo-loop race.
@@ -53,6 +54,7 @@ export const useVoice = (
     isRecordingRef.current = true;
     isCancelledRef.current = false;
     lastVoiceTimeRef.current = Date.now();
+    isSilentSentRef.current = true;
 
     try {
       // Dynamically import RecordRTC only on the client
@@ -120,10 +122,14 @@ export const useVoice = (
           const now = Date.now();
           const timeSinceLast = now - lastVoiceTimeRef.current;
 
-          // If we detect voice after being in a silence window (> 1500ms gap),
-          // tell the backend to cancel any pending AI turn queued during that gap.
-          if (
-            timeSinceLast > 1500 &&
+          if (isSilentSentRef.current) {
+            isSilentSentRef.current = false;
+            const socket = socketRef.current;
+            if (socket && socket.readyState === WebSocket.OPEN && !isAISpeakingRef.current && !isMutedRef.current) {
+              socket.send(JSON.stringify({ type: "user_speaking" }));
+            }
+          } else if (
+            timeSinceLast > 1200 &&
             !isAISpeakingRef.current &&
             !isMutedRef.current
           ) {
@@ -134,6 +140,14 @@ export const useVoice = (
           }
 
           lastVoiceTimeRef.current = now;
+        } else {
+          if (!isSilentSentRef.current && Date.now() - lastVoiceTimeRef.current > 1000) {
+            isSilentSentRef.current = true;
+            const socket = socketRef.current;
+            if (socket && socket.readyState === WebSocket.OPEN && !isAISpeakingRef.current && !isMutedRef.current) {
+              socket.send(JSON.stringify({ type: "user_silent" }));
+            }
+          }
         }
 
         requestAnimationFrame(checkVolume);
@@ -178,7 +192,7 @@ export const useVoice = (
           // Only switch to silence keepalive if paused for > 4000ms (after the AAI 3500ms window).
           // Keepalive must start AFTER minTurnSilence so fake PCM never interferes with
           // AAI's own mid-sentence pause detection.
-          const isSilenceKeepalive = timeSinceLastVoice > 4000;
+          const isSilenceKeepalive = timeSinceLastVoice > 2000;
           if (isSilenceKeepalive) {
             const sinceLastSilenceSend = now - lastSilenceSendAtRef.current;
             if (sinceLastSilenceSend < SILENCE_SEND_INTERVAL_MS) return;

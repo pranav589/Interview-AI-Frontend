@@ -53,7 +53,76 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
-  const sections = user?.role === "employer"
+  const sections = user?.role === "admin"
+    ? [
+        {
+          title: "Overview",
+          items: [
+            {
+              name: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Mock Interview",
+              href: "/interview-setup",
+              icon: Sparkles,
+              badge: "New",
+            },
+          ],
+        },
+        {
+          title: "Recruitment",
+          items: [
+            {
+              name: "Recruitment Dashboard",
+              href: "/dashboard/recruitment",
+              icon: ShieldCheck,
+            },
+            {
+              name: "Jobs Management",
+              href: "/dashboard/recruitment/jobs",
+              icon: FileText,
+            },
+          ],
+        },
+        {
+          title: "Resume Hub",
+          items: [
+            {
+              name: "Resume Builder",
+              href: "/resume/builder",
+              icon: Plus,
+            },
+            {
+              name: "ATS Analyzer",
+              href: "/resume/analyzer",
+              icon: FileText,
+            },
+            {
+              name: "JD Matcher",
+              href: "/resume/jd-match",
+              icon: FileCheck,
+            },
+            {
+              name: "Resume Vault",
+              href: "/resume/vault",
+              icon: FolderHeart,
+            },
+          ],
+        },
+        {
+          title: "Account",
+          items: [
+            {
+              name: "Settings & Security",
+              href: "/dashboard/settings",
+              icon: Settings,
+            },
+          ],
+        },
+      ]
+    : user?.role === "employer"
     ? [
         {
           title: "Recruitment",
