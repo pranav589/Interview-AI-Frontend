@@ -11,7 +11,7 @@ interface AuthWrapperProps {
 }
 
 export default function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { isLoggedIn, isLoading, isClient } = useAuth();
+    const { user, isLoggedIn, isLoading, isClient } = useAuth();
     const [showLoading, setShowLoading] = useState(false);
     const router = useRouter();
 
@@ -35,20 +35,36 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
     }, [isLoading]);
 
     useEffect(() => {
-        // Only redirect if:
-        // 1. We are on the client
-        // 2. Auth is NOT loading and user is NOT logged in
-        // 3. IMPORTANT: We are NOT currently re-fetching (which could be the background refresh)
-        if (isClient && !isLoading && !isLoggedIn) {
-            // Check if we are on a protected path before redirecting
-            // (AuthWrapper is usually only used on protected pages, but good to be safe)
-            const isAuthPath = window.location.pathname.startsWith('/auth');
-            if (!isAuthPath) {
-                console.log('[AuthWrapper] No session found. Redirecting to signin.');
-                router.push('/auth/signin');
+        if (isClient && !isLoading) {
+            if (!isLoggedIn) {
+                // Check if we are on a protected path before redirecting
+                // (AuthWrapper is usually only used on protected pages, but good to be safe)
+                const isAuthPath = window.location.pathname.startsWith('/auth');
+                if (!isAuthPath) {
+                    console.log('[AuthWrapper] No session found. Redirecting to signin.');
+                    router.push('/auth/signin');
+                }
+            } else if (user) {
+                const path = window.location.pathname;
+
+                // 1. Candidate route protection
+                if (user.role === 'candidate') {
+                    // Allowed paths: /invite/*, /interview-room/*
+                    const isAllowed = path.startsWith('/invite') || path.startsWith('/interview-room');
+                    if (!isAllowed) {
+                        console.log('[AuthWrapper] Candidates cannot access this page. Redirecting to invite complete.');
+                        router.push('/invite/complete');
+                    }
+                }
+
+                // 2. Employer auto-redirect from /dashboard to /dashboard/recruitment
+                if (user.role === 'employer' && path === '/dashboard') {
+                    console.log('[AuthWrapper] Employer auto-redirect to recruitment.');
+                    router.push('/dashboard/recruitment');
+                }
             }
         }
-    }, [isClient, isLoading, isLoggedIn]);
+    }, [isClient, isLoading, isLoggedIn, user]);
 
     if (isLoading && showLoading) {
         return (

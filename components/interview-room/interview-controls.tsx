@@ -24,6 +24,7 @@ interface InterviewControlsProps {
   isCodingMode: boolean;
   onToggleCodingMode: () => void;
   isCodingEnabled?: boolean;
+  isB2B?: boolean;
 }
 
 export default function InterviewControls({
@@ -37,6 +38,7 @@ export default function InterviewControls({
   isCodingMode,
   onToggleCodingMode,
   isCodingEnabled = true,
+  isB2B = false,
 }: InterviewControlsProps) {
   return (
     <motion.div
@@ -49,6 +51,7 @@ export default function InterviewControls({
         variant="ghost"
         size="icon"
         onClick={onToggleMute}
+        disabled={isB2B}
         className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
           isMuted ? "bg-destructive text-white" : "bg-surface-chip-translucent text-ink"
         }`}
@@ -61,6 +64,7 @@ export default function InterviewControls({
         variant="ghost"
         size="icon"
         onClick={onToggleVideo}
+        disabled={isB2B}
         className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
           !isVideoEnabled ? "bg-destructive text-white" : "bg-surface-chip-translucent text-ink"
         }`}
@@ -77,6 +81,7 @@ export default function InterviewControls({
         variant="ghost"
         size="icon"
         onClick={onTogglePause}
+        disabled={isB2B}
         className={`w-11 h-11 rounded-full transition-all active:scale-95 ${
           isPaused ? "bg-primary text-white" : "bg-surface-chip-translucent text-ink"
         }`}

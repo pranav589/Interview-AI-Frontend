@@ -7,6 +7,7 @@ import { api } from "@/lib/api";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardTabContainer } from "@/components/dashboard/dashboard-tab-container";
 import { DashboardOnboarding } from "@/components/dashboard/dashboard-onboarding";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -28,6 +29,10 @@ export default async function Dashboard() {
       }
     },
   });
+
+  if (userData?.role === "employer") {
+    redirect("/dashboard/recruitment");
+  }
 
   const userId = userData?.id || userData?._id;
 

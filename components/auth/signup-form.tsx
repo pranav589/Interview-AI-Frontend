@@ -22,10 +22,11 @@ export default function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [validationError, setValidationError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [role, setRole] = useState<'user' | 'employer'>('user');
 
   const signupMutation = useMutation({
     mutationFn: async () => {
-      await signup(name, email, password);
+      await signup(name, email, password, role);
     },
     onSuccess: () => {
       setIsSuccess(true);
@@ -91,7 +92,7 @@ export default function SignupForm() {
                     </div>
                     <div className="pt-4 flex flex-col gap-3">
                       <Link href="/auth/signin">
-                        <Button className="w-full h-11 gap-2 font-bold">
+                        <Button className="w-full h-11 gap-2 font-bold text-white">
                           Go to Sign In <ArrowRight className="w-4 h-4" />
                         </Button>
                       </Link>
@@ -112,6 +113,34 @@ export default function SignupForm() {
                           {displayError}
                         </div>
                       )}
+
+                      <div className="space-y-2">
+                        <Label>Register as</Label>
+                        <div className="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-lg">
+                          <button
+                            type="button"
+                            onClick={() => setRole('user')}
+                            className={`py-2 text-sm font-semibold rounded-md transition-all ${
+                              role === 'user'
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            Candidate
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRole('employer')}
+                            className={`py-2 text-sm font-semibold rounded-md transition-all ${
+                              role === 'employer'
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            Employer
+                          </button>
+                        </div>
+                      </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>

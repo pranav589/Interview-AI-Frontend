@@ -17,15 +17,23 @@ export interface UserResumeUploadResult {
 
 export const useUpdateSettings = () => {
   const queryClient = useQueryClient();
+  const { refreshUser } = useAuth();
 
   return useMutation({
-    mutationFn: async (data: { weeklyEmailDigest?: boolean }) => {
+    mutationFn: async (data: {
+      weeklyEmailDigest?: boolean;
+      name?: string;
+      companyName?: string;
+      companyWebsite?: string;
+      aiInterviewerName?: string;
+    }) => {
       const response = await api.patch<{ message: string; user: any }>("user/settings", data);
       return response;
     },
-    onSuccess: () => {
-      // Invalidate user profile if needed, or update local cache
+    onSuccess: async () => {
+      await refreshUser();
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["auth-user"] });
       toast.success(MESSAGES.SETTINGS.UPDATE_SUCCESS);
     },
     onError: (error: any) => {

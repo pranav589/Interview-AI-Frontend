@@ -1,23 +1,58 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 
-export const useVoice = (options: { isMuted?: boolean } = {}) => {
+// Align with backend TranscriptionProvider minTurnSilence (2000ms) + buffer.
+// We keep audio flowing for 8s of silence so AssemblyAI never sees a gap and force-finalizes early.
+const THINKING_PAUSE_MS = 8000;
+const SILENCE_SEND_INTERVAL_MS = 500; // send a keepalive chunk every 500ms during silence
+
+// 3200 bytes of silence at 16kHz mono = 100ms of audio.
+// Meets AssemblyAI's minimum chunk duration requirement (50ms - 1000ms).
+const SILENCE_KEEPALIVE_BASE64 =
+  typeof window !== "undefined" ? btoa("\0".repeat(3200)) : "";
+
+export const useVoice = (
+  // Accept a MutableRefObject instead of a direct socket value so we always
+  // read the current socket even after reconnects, without re-instantiating the recorder.
+  socketRef: React.MutableRefObject<WebSocket | null>,
+  options: { isMuted?: boolean } = {},
+) => {
   const recorder = useRef<any>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const isCancelledRef = useRef<boolean>(false);
   const isMutedRef = useRef<boolean>(options.isMuted || false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const lastVoiceTimeRef = useRef<number>(0);
+  const lastVoiceTimeRef = useRef<number>(Date.now());
   const lastSilenceSendAtRef = useRef<number>(0);
+
+  // Ref-based AI-speaking guard, controlled imperatively by the parent component
+  // via `setAISpeaking`. Avoids the React re-render lag that caused the echo-loop race.
+  const isAISpeakingRef = useRef<boolean>(false);
+  const isRecordingRef = useRef<boolean>(false);
+
   const [volume, setVolume] = useState(0);
 
   useEffect(() => {
     isMutedRef.current = options.isMuted || false;
   }, [options.isMuted]);
 
-  const startRecording = useCallback(async (socket: WebSocket | null) => {
+  //  Expose an imperative setter so the parent can synchronously block/unblock audio
+  // at the exact moment audio playback starts/ends, without going through a React re-render.
+  const setAISpeaking = useCallback((speaking: boolean) => {
+    isAISpeakingRef.current = speaking;
+  }, []);
+
+  const startRecording = useCallback(async () => {
     if (typeof window === "undefined") return;
+    if (isRecordingRef.current) {
+      console.warn(
+        "[VOICE] startRecording called while already recording. Ignoring.",
+      );
+      return;
+    }
+    isRecordingRef.current = true;
     isCancelledRef.current = false;
+    lastVoiceTimeRef.current = Date.now();
 
     try {
       // Dynamically import RecordRTC only on the client
@@ -29,7 +64,7 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
         noiseSuppression: true,
         autoGainControl: true,
         channelCount: 1,
-        sampleRate: 16000, 
+        sampleRate: 16000,
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -44,8 +79,17 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
       streamRef.current = stream;
 
       // --- VAD Setup ---
-      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      const AudioContextClass =
+        window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextClass();
+
+      // Auto-resume if suspended by browser autoplay policy
+      if (audioContext.state === "suspended") {
+        await audioContext.resume().catch((err) => {
+          console.warn("[VAD] Failed to resume AudioContext:", err);
+        });
+      }
+
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -59,9 +103,9 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
 
       const checkVolume = () => {
         if (isCancelledRef.current || !analyserRef.current) return;
-        
+
         analyserRef.current.getByteTimeDomainData(dataArray);
-        
+
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) {
           const v = (dataArray[i] - 128) / 128;
@@ -72,11 +116,26 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
         // Update real-time volume state for UI
         setVolume(Math.min(100, rms * 500));
 
-        // Lowered threshold to 0.005 for better sensitivity
-        if (rms > 0.005) {
-          lastVoiceTimeRef.current = Date.now();
+        if (rms > 0.015) {
+          const now = Date.now();
+          const timeSinceLast = now - lastVoiceTimeRef.current;
+
+          // If we detect voice after being in a silence window (> 1500ms gap),
+          // tell the backend to cancel any pending AI turn queued during that gap.
+          if (
+            timeSinceLast > 1500 &&
+            !isAISpeakingRef.current &&
+            !isMutedRef.current
+          ) {
+            const socket = socketRef.current;
+            if (socket && socket.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify({ type: "user_speaking" }));
+            }
+          }
+
+          lastVoiceTimeRef.current = now;
         }
-        
+
         requestAnimationFrame(checkVolume);
       };
       checkVolume();
@@ -91,28 +150,52 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
         numberOfAudioChannels: 1,
         bufferSize: 4096,
         ondataavailable: async (blob: Blob) => {
-          const THINKING_PAUSE_MS = 6000;
-          const SILENCE_SEND_INTERVAL_MS = 1000;
+          // BUG-01: Block mic when AI is speaking (ref-based, synchronous guard)
+          if (isAISpeakingRef.current) return;
+
+          // BUG-01: Also respect the mute toggle
+          if (isMutedRef.current) return;
+
+          // BUG-05: Always read socket from the ref so reconnects work seamlessly
+          const socket = socketRef.current;
+          if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
           const now = Date.now();
           const timeSinceLastVoice = now - lastVoiceTimeRef.current;
 
-          // Keepalive policy:
-          // - If the user spoke recently, stream normally.
-          // - If the user is in a short thinking pause (<= 6s), keep streaming at a low rate so
-          //   AssemblyAI doesn't finalize the turn just because audio stopped flowing.
-          // - If silence is longer than the thinking window, stop streaming to save bandwidth.
-          if (timeSinceLastVoice > THINKING_PAUSE_MS) return;
+          // Safety check: If AudioContext is not running, do NOT discard any audio chunks
+          // to prevent browser policies or quiet levels from silencing candidate's speech.
+          const isAudioContextActive =
+            audioContextRef.current &&
+            audioContextRef.current.state === "running";
 
-          const isSilenceKeepalive = timeSinceLastVoice > 800; // treat as "pause" after 0.8s
+          // Stop sending after THINKING_PAUSE_MS of silence (10s)
+          // During the silence window (0.8s–10s) send a keepalive every 500ms
+          // to prevent AssemblyAI from closing the session prematurely.
+          if (isAudioContextActive && timeSinceLastVoice > THINKING_PAUSE_MS)
+            return;
+
+          // Only switch to silence keepalive if paused for > 4000ms (after the AAI 3500ms window).
+          // Keepalive must start AFTER minTurnSilence so fake PCM never interferes with
+          // AAI's own mid-sentence pause detection.
+          const isSilenceKeepalive = timeSinceLastVoice > 4000;
           if (isSilenceKeepalive) {
             const sinceLastSilenceSend = now - lastSilenceSendAtRef.current;
-            if (sinceLastSilenceSend < SILENCE_SEND_INTERVAL_MS) {
-              return;
-            }
+            if (sinceLastSilenceSend < SILENCE_SEND_INTERVAL_MS) return;
             lastSilenceSendAtRef.current = now;
+
+            // Send raw PCM silence instead of stopping the stream, keeping
+            // AssemblyAI's session alive and preventing premature turn finalization.
+            socket.send(
+              JSON.stringify({
+                type: "audio",
+                chunk: SILENCE_KEEPALIVE_BASE64,
+              }),
+            );
+            return;
           }
 
+          // Normal audio: read blob and send
           const reader = new FileReader();
           reader.onload = () => {
             const result = reader.result;
@@ -120,12 +203,7 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
               const splitResult = result.split(",");
               const base64data = splitResult.slice(1).join(",");
 
-              if (
-                base64data &&
-                socket &&
-                socket.readyState === WebSocket.OPEN &&
-                !isMutedRef.current
-              ) {
+              if (base64data && socket.readyState === WebSocket.OPEN) {
                 socket.send(
                   JSON.stringify({ type: "audio", chunk: base64data }),
                 );
@@ -139,12 +217,13 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
       recorder.current.startRecording();
     } catch (err) {
       console.error("Microphone access failed:", err);
-      // Parent component handles errors now
+      isRecordingRef.current = false;
     }
-  }, []);
+  }, [socketRef]);
 
   const stopRecording = useCallback(() => {
     isCancelledRef.current = true;
+    isRecordingRef.current = false;
     try {
       if (recorder.current) {
         recorder.current.stopRecording();
@@ -163,6 +242,7 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
       }
       analyserRef.current = null;
       lastSilenceSendAtRef.current = 0;
+      isAISpeakingRef.current = false;
     } catch (err) {
       console.error("Error stopping recorder:", err);
     }
@@ -174,5 +254,5 @@ export const useVoice = (options: { isMuted?: boolean } = {}) => {
     };
   }, [stopRecording]);
 
-  return { startRecording, stopRecording, volume };
+  return { startRecording, stopRecording, volume, setAISpeaking };
 };

@@ -4,9 +4,8 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, FileText, Pause, Play, Code2 } from "lucide-react";
+import { AlertCircle, Pause, Play } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatMessage } from "./transcription-chat";
@@ -16,6 +15,7 @@ import { MESSAGES } from "@/lib/constants";
 import { api } from "@/lib/api";
 import { useInterviewDetails, useGenerateFeedback } from "@/hooks/use-interviews";
 import { useFeatureFlags } from "@/lib/feature-flags-context";
+import { useAuth } from "@/lib/auth-context";
 
 // Sub-components
 import InterviewHeader from "./interview-header";
@@ -72,6 +72,7 @@ function InterviewRoomContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const { isFeatureEnabled } = useFeatureFlags();
+  const { logout } = useAuth();
 
   const {
     data: interviewData,
@@ -89,15 +90,18 @@ function InterviewRoomContent() {
   >("idle");
   const [interviewTime, setInterviewTime] = useState(0);
   const [partialTranscript, setPartialTranscript] = useState("");
-  const [feedback, setFeedback] = useState("");
+  const [permissionsError, setPermissionsError] = useState<string | null>(null);
   const [showStopModal, setShowStopModal] = useState(false);
   const [showTimeUpModal, setShowTimeUpModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
-  const [permissionsError, setPermissionsError] = useState<string | null>(null);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(false);
   const [hasPermissions, setHasPermissions] = useState(false);
   const [isStartingInterview, setIsStartingInterview] = useState(false);
+
+  // Video Recording Upload States
+  const [videoUploadState, setVideoUploadState] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [shouldRedirectAfterUpload, setShouldRedirectAfterUpload] = useState(false);
 
   // Coding Mode States
   const [isCodingMode, setIsCodingMode] = useState(false);
@@ -106,14 +110,26 @@ function InterviewRoomContent() {
 
   const ws = useRef<WebSocket | null>(null);
   const threadId = useRef<string>(id || "");
-  const { startRecording, stopRecording, volume } = useVoice({
-    isMuted: isMuted || aiState === "speaking",
+  // BUG-05: Pass ws as a MutableRefObject so the recorder always reads the live socket,
+  // even after a reconnect creates a new WebSocket instance.
+  const { startRecording, stopRecording, volume, setAISpeaking } = useVoice(ws, {
+    isMuted,
   });
   const isSpeakingRef = useRef(false);
   const isInterviewActiveRef = useRef(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-  const speechQueueRef = useRef<{ text: string; url: string }[]>([]);
+  const speechQueueRef = useRef<{ text: string; url: string; audio?: HTMLAudioElement }[]>([]);
   const isProcessingQueueRef = useRef(false);
+  // Q3: Auto-reconnect state
+  const reconnectAttemptsRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 3;
+  const isReconnectingRef = useRef(false);
+  // EDGE-CASE: The interview always starts from the AI side.
+  // The mic must NOT activate until the AI has finished its first turn.
+  // This prevents ambient noise / acknowledgment sounds during the opening
+  // question from being picked up as a phantom user turn (double-reply bug).
+  const hasAISpokeFirstRef = useRef(false);
+  const thinkingStartRef = useRef<number>(0);
 
   useEffect(() => {
     if (id) threadId.current = id;
@@ -200,10 +216,32 @@ function InterviewRoomContent() {
     }
   };
 
+  const setupTTSAudio = (audio: HTMLAudioElement) => {
+    audio.crossOrigin = "anonymous";
+    if (typeof window !== "undefined" && (window as any).ttsAudioContext && (window as any).ttsAudioDestination) {
+      const audioContext = (window as any).ttsAudioContext as AudioContext;
+      const destination = (window as any).ttsAudioDestination as MediaStreamAudioDestinationNode;
+      try {
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(audioContext.destination);
+        source.connect(destination);
+      } catch (err) {
+        console.error("[TTSAudio] Failed to route audio through context:", err);
+      }
+    }
+  };
+
   const processSpeechQueue = async () => {
     if (!isFeatureEnabled("tts_enabled")) {
       speechQueueRef.current = [];
       setAiState("listening");
+      // BUG-01: Unblock microphone when TTS is disabled
+      setAISpeaking(false);
+      // EDGE-CASE: Start mic on first AI turn if not already recording
+      if (!hasAISpokeFirstRef.current) {
+        hasAISpokeFirstRef.current = true;
+        startRecording();
+      }
       if (ws.current?.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({ type: "speech_finished" }));
       }
@@ -222,25 +260,28 @@ function InterviewRoomContent() {
       const item = speechQueueRef.current[0]; // Peek
       if (!item) break;
 
-      // Ensure this item has an audio object
-      if (!(item as any).audio) {
-        (item as any).audio = new Audio(item.url);
-        (item as any).audio.preload = "auto";
+      // BUG-02: Audio should already be pre-fetched at enqueue time (see speakText below).
+      // This is a safety fallback only.
+      if (!item.audio) {
+        const fallbackAudio = new Audio(item.url);
+        fallbackAudio.preload = "auto";
+        setupTTSAudio(fallbackAudio);
+        item.audio = fallbackAudio;
       }
 
-      const audio = (item as any).audio as HTMLAudioElement;
+      const audio = item.audio as HTMLAudioElement;
       currentAudioRef.current = audio;
 
-      // Start pre-loading the NEXT chunk immediately
-      const nextItem = speechQueueRef.current[1];
-      if (nextItem && !(nextItem as any).audio) {
-        (nextItem as any).audio = new Audio(nextItem.url);
-        (nextItem as any).audio.preload = "auto";
-      }
+      // EDGE-CASE (double-reply): Set the AI-speaking guard BEFORE calling play(),
+      // not inside onplay. There is a small but real window between play() being called
+      // and the onplay event firing where the mic could be open. Locking here closes it.
+      isSpeakingRef.current = true;
+      setAISpeaking(true);
+      setAiState("speaking");
 
       await new Promise<void>((resolve) => {
         audio.onplay = () => {
-          isSpeakingRef.current = true;
+          // Guard already set above — this is a no-op but kept for clarity
           setAiState("speaking");
         };
 
@@ -256,6 +297,8 @@ function InterviewRoomContent() {
           isSpeakingRef.current = false;
           currentAudioRef.current = null;
           speechQueueRef.current.shift();
+          // Release the guard so the mic isn't permanently blocked on error
+          setAISpeaking(false);
           resolve();
         };
 
@@ -266,6 +309,7 @@ function InterviewRoomContent() {
           isSpeakingRef.current = false;
           currentAudioRef.current = null;
           speechQueueRef.current.shift();
+          setAISpeaking(false);
           resolve();
         });
       });
@@ -274,14 +318,35 @@ function InterviewRoomContent() {
     isProcessingQueueRef.current = false;
     setAiState("listening");
 
-    // Signal potential backend mic-lock to release
+    // BUG-06: After draining, re-check if more sentences arrived during processing.
+    if (speechQueueRef.current.length > 0) {
+      processSpeechQueue();
+      return;
+    }
+
+    // BUG-01: Unblock microphone AFTER all audio has played
+    // Q4: Add 300ms buffer to account for audio device output latency before
+    // signalling the backend that we are ready to receive the next user turn.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    setAISpeaking(false);
+
+    // EDGE-CASE: On the very first AI turn, the mic has not started yet.
+    // Start it now — after the AI has finished speaking — so the candidate
+    // is never recorded during the opening question.
+    if (!hasAISpokeFirstRef.current) {
+      hasAISpokeFirstRef.current = true;
+      startRecording();
+    }
+
+    // BUG-03: Signal backend to release the mic-lock (this is the authoritative signal;
+    // the backend's heuristic timer is just a safety fallback).
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({ type: "speech_finished" }));
     }
   };
 
   const speakText = (text: string) => {
-    // Strip markdown for cleaner TTS
+    // Strip markdown for cleaner TTS output
     const cleanText = text
       .replace(/\*\*/g, "")
       .replace(/\*/g, "")
@@ -291,29 +356,30 @@ function InterviewRoomContent() {
 
     if (!cleanText) return Promise.resolve();
 
-    const sentences = cleanText.match(/[^.!?]+[.!?]*\s*/g) || [cleanText];
-
     const baseUrl =
       process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
       "http://localhost:3001/api/v1";
 
-    sentences.forEach((s) => {
-      const trimmed = s.trim();
-      if (trimmed) {
-        const ttsUrl = `${baseUrl}/tts?text=${encodeURIComponent(trimmed)}`;
-        speechQueueRef.current.push({ text: trimmed, url: ttsUrl });
-      }
-    });
+    // Send the entire response as a single TTS request — simpler, better prosody,
+    // and eliminates the N-HTTP-request waterfall from sentence splitting.
+    const ttsUrl = `${baseUrl}/tts?text=${encodeURIComponent(cleanText)}`;
+    const audio = new Audio(ttsUrl);
+    audio.preload = "auto";
+    setupTTSAudio(audio);
+    speechQueueRef.current.push({ text: cleanText, url: ttsUrl, audio });
 
     processSpeechQueue();
     return Promise.resolve();
   };
+
 
   const generateFeedback = useGenerateFeedback();
 
   const handleGetFeedbackAndRedirect = () => {
     const interviewId = id || threadId.current;
     if (!interviewId) return;
+
+    const isB2B = !!interviewData?.employerId;
 
     toast.promise(
       generateFeedback.mutateAsync({
@@ -323,6 +389,11 @@ function InterviewRoomContent() {
       {
         loading: "Starting interview analysis...",
         success: (data) => {
+          if (isB2B) {
+            logout();
+            router.push("/invite/complete");
+            return "Interview completed successfully! The hiring team has been notified.";
+          }
           // Redirect immediately to detail page, which will handle polling
           const jobId = data.jobId;
           router.push(`/interview/${interviewId}${jobId ? `?jobId=${jobId}` : ""}`);
@@ -330,12 +401,50 @@ function InterviewRoomContent() {
         },
         error: (err) => {
           console.error("Feedback kickoff failed:", err);
-          router.push("/dashboard");
+          if (isB2B) {
+            logout();
+            router.push("/invite/complete");
+          } else {
+            router.push("/dashboard");
+          }
           return "Session ended, but analysis kickoff failed.";
         },
       },
     );
   };
+
+  const triggerEndSessionAndRedirect = () => {
+    const isB2B = !!interviewData?.employerId;
+    if (isB2B && videoUploadState === "uploading") {
+      setShouldRedirectAfterUpload(true);
+      toast.info("Saving your interview recording... Please wait.", {
+        duration: 5000,
+      });
+    } else {
+      handleGetFeedbackAndRedirect();
+    }
+  };
+
+  // Warn user if they try to close the tab during video upload
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (videoUploadState === "uploading") {
+        e.preventDefault();
+        e.returnValue = "Your interview recording is still uploading. Please do not close this window.";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [videoUploadState]);
+
+  // Trigger redirection once the video upload finishes (or fails)
+  useEffect(() => {
+    if (shouldRedirectAfterUpload && videoUploadState !== "uploading") {
+      setShouldRedirectAfterUpload(false);
+      handleGetFeedbackAndRedirect();
+    }
+  }, [shouldRedirectAfterUpload, videoUploadState]);
 
   const handleTogglePause = () => {
     if (isPaused) {
@@ -343,7 +452,8 @@ function InterviewRoomContent() {
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify({ type: "resume" }));
       }
-      startRecording(ws.current);
+      // BUG-05: startRecording now reads from ws ref internally
+      startRecording();
       setAiState("listening");
       setMessages((prev) => [
         ...prev,
@@ -362,6 +472,7 @@ function InterviewRoomContent() {
         currentAudioRef.current = null;
       }
       stopRecording();
+      setAISpeaking(false);
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(
           JSON.stringify({
@@ -394,6 +505,7 @@ function InterviewRoomContent() {
 
     try {
       setAiState("thinking");
+      thinkingStartRef.current = Date.now();
       setMessages([
         {
           id: "init-1",
@@ -455,7 +567,15 @@ function InterviewRoomContent() {
             }),
           );
         }
-        startRecording(socket);
+        // EDGE-CASE: For fresh interviews the mic starts AFTER the AI's first turn
+        // (handled inside processSpeechQueue via hasAISpokeFirstRef).
+        // For resume sessions, start immediately since the AI won't speak first.
+        if (resuming) {
+          startRecording();
+        } else {
+          // Ensure mic is locked until AI finishes first question
+          setAISpeaking(true);
+        }
         setIsInterviewActive(true);
         isInterviewActiveRef.current = true;
         setIsStartingInterview(false);
@@ -469,7 +589,12 @@ function InterviewRoomContent() {
             setIsCodingMode(!!data.isCodingMode);
           }
 
-          setAiState("thinking");
+          const elapsed = Date.now() - thinkingStartRef.current;
+          const minThinking = 1200;
+          if (elapsed < minThinking) {
+            await new Promise((resolve) => setTimeout(resolve, minThinking - elapsed));
+          }
+
           setMessages((prev) => [
             ...prev,
             { id: `ai-${Date.now()}`, speaker: "ai", text: data.content },
@@ -506,7 +631,12 @@ function InterviewRoomContent() {
           if (data.initialCode) {
             setCode(data.initialCode);
           }
-          setAiState("thinking");
+          
+          const elapsed = Date.now() - thinkingStartRef.current;
+          const minThinking = 1200;
+          if (elapsed < minThinking) {
+            await new Promise((resolve) => setTimeout(resolve, minThinking - elapsed));
+          }
 
           setMessages((prev) => [
             ...prev,
@@ -517,6 +647,12 @@ function InterviewRoomContent() {
             },
           ]);
           await speakText(data.questionText);
+        } else if (data.type === "thinking") {
+          thinkingStartRef.current = Date.now();
+          setAiState("thinking");
+        } else if (data.type === "interrupted") {
+          setAiState("listening");
+          setPartialTranscript("");
         } else if (data.type === "user_text") {
           // The backend may wait (silence-gate) before invoking the AI.
           // Keep UI in listening state until we actually receive the AI response.
@@ -542,8 +678,7 @@ function InterviewRoomContent() {
               text: m.text,
             }));
 
-          setMessages((prev) => [
-            ...prev,
+          setMessages([
             ...historicalMessages,
             {
               id: `sys-${Date.now()}`,
@@ -567,10 +702,66 @@ function InterviewRoomContent() {
           toast.error(data.message);
         }
       };
+      // Q3: Auto-reconnect on unexpected close with exponential backoff
+      const attemptReconnect = async () => {
+        if (isReconnectingRef.current) return;
+        if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          isReconnectingRef.current = false;
+          setShowDisconnectModal(true);
+          return;
+        }
+
+        isReconnectingRef.current = true;
+        reconnectAttemptsRef.current += 1;
+        const delay = Math.pow(2, reconnectAttemptsRef.current) * 500; // 1s, 2s, 4s
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            speaker: "system",
+            text: `Connection lost. Reconnecting (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})...`,
+          },
+        ]);
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        try {
+          const resp = await api.post<{ data: { ticket: string } }>("auth/ws-ticket");
+          const ticket = resp.data.ticket;
+          const wsUrl = new URL(process.env.NEXT_PUBLIC_WS_URL!);
+          wsUrl.searchParams.set("ticket", ticket);
+
+          const newSocket = new WebSocket(wsUrl.toString());
+          ws.current = newSocket;
+
+          newSocket.onopen = () => {
+            reconnectAttemptsRef.current = 0;
+            isReconnectingRef.current = false;
+            newSocket.send(JSON.stringify({ type: "resume", threadId: threadId.current }));
+            startRecording();
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `sys-${Date.now()}`,
+                speaker: "system",
+                text: "Reconnected successfully!",
+              },
+            ]);
+          };
+
+          // Re-attach the same handlers recursively
+          newSocket.onclose = socket.onclose;
+          newSocket.onerror = socket.onerror;
+          newSocket.onmessage = socket.onmessage;
+        } catch {
+          isReconnectingRef.current = false;
+          attemptReconnect();
+        }
+      };
+
       socket.onclose = () => {
-        if (isInterviewActiveRef.current) {
-          setIsInterviewActive(false);
-          isInterviewActiveRef.current = false;
+        if (isInterviewActiveRef.current && !isReconnectingRef.current) {
           speechQueueRef.current = [];
           if (currentAudioRef.current) {
             currentAudioRef.current.pause();
@@ -579,8 +770,12 @@ function InterviewRoomContent() {
           }
           isProcessingQueueRef.current = false;
           isSpeakingRef.current = false;
+          setAISpeaking(false);
           stopRecording();
-          setShowDisconnectModal(true);
+          // Q3: Try to reconnect before showing the disconnect modal
+          attemptReconnect();
+        } else if (!isInterviewActiveRef.current) {
+          // Normal close (interview ended), nothing to do
         }
       };
       socket.onerror = () => {
@@ -621,11 +816,16 @@ function InterviewRoomContent() {
     ws.current = null;
     setAiState("idle");
 
-    handleGetFeedbackAndRedirect();
+    triggerEndSessionAndRedirect();
   };
 
   const handleSubmitCode = async (submittedCode: string, language: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      // Lock microphone and transition state to AI thinking
+      setAISpeaking(true);
+      setAiState("thinking");
+      thinkingStartRef.current = Date.now();
+
       ws.current.send(
         JSON.stringify({
           type: "code_submission",
@@ -753,6 +953,12 @@ function InterviewRoomContent() {
                           <CameraFeed
                             isMuted={isMuted}
                             isVideoEnabled={isVideoEnabled}
+                            interviewId={id || undefined}
+                            isProctoringEnabled={!!interviewData?.employerId}
+                            isInterviewActive={isInterviewActive}
+                            isPaused={isPaused}
+                            onVideoUploadStart={() => setVideoUploadState("uploading")}
+                            onVideoUploadComplete={(success) => setVideoUploadState(success ? "success" : "error")}
                           />
                         </div>
                         <div className="flex-1 min-h-0 overflow-hidden">
@@ -778,6 +984,12 @@ function InterviewRoomContent() {
                         <CameraFeed
                           isMuted={isMuted}
                           isVideoEnabled={isVideoEnabled}
+                          interviewId={id || undefined}
+                          isProctoringEnabled={!!interviewData?.employerId}
+                          isInterviewActive={isInterviewActive}
+                          isPaused={isPaused}
+                          onVideoUploadStart={() => setVideoUploadState("uploading")}
+                          onVideoUploadComplete={(success) => setVideoUploadState(success ? "success" : "error")}
                         />
                       </div>
                       <div className="h-[500px]">
@@ -803,19 +1015,8 @@ function InterviewRoomContent() {
                   onToggleCodingMode={() => setIsCodingMode(!isCodingMode)}
                   onEndInterview={() => setShowStopModal(true)}
                   isCodingEnabled={isFeatureEnabled("coding_mode_enabled")}
+                  isB2B={!!interviewData?.employerId}
                 />
-                {feedback && (
-                  <Card className="bg-emerald-500/10 border-emerald-200 dark:border-emerald-800">
-                    <CardHeader className="py-4 font-bold text-emerald-600 flex flex-row items-center gap-2">
-                      <FileText className="w-5 h-5" /> Interview Feedback
-                    </CardHeader>
-                    <CardContent className="py-6 italic text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                      {typeof feedback === "string"
-                        ? feedback
-                        : (feedback as any).feedbackSummary}
-                    </CardContent>
-                  </Card>
-                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -875,11 +1076,11 @@ function InterviewRoomContent() {
           onConfirmStop={confirmStop}
           onCloseTimeUp={() => {
             setShowTimeUpModal(false);
-            handleGetFeedbackAndRedirect();
+            triggerEndSessionAndRedirect();
           }}
           onCloseComplete={() => {
             setShowCompleteModal(false);
-            handleGetFeedbackAndRedirect();
+            triggerEndSessionAndRedirect();
           }}
           onCloseDisconnect={() => {
             setShowDisconnectModal(false);
@@ -887,6 +1088,24 @@ function InterviewRoomContent() {
           }}
         />
       )}
+
+      {/* Uploading Overlay */}
+      <AnimatePresence>
+        {shouldRedirectAfterUpload && videoUploadState === "uploading" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center"
+          >
+            <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mb-6" />
+            <h2 className="text-2xl font-bold mb-2">Saving Interview Recording</h2>
+            <p className="text-muted-foreground max-w-sm">
+              Please do not close this window or navigate away. We are finalizing and uploading your video assessment.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

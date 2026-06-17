@@ -26,6 +26,7 @@ export default function SigninForm() {
   const [password, setPassword] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [show2FA, setShow2FA] = useState(false);
+  const [role, setRole] = useState<'user' | 'employer'>('user');
 
   const loginMutation = useMutation({
     mutationFn: async () => {
@@ -53,7 +54,7 @@ export default function SigninForm() {
 
   const handleGoogleLogin = () => {
     // Redirect to backend google auth endpoint
-    window.location.href = GOOGLE_AUTH_ENDPOINT
+    window.location.href = `${GOOGLE_AUTH_ENDPOINT}?role=${role}`;
   };
 
   return (
@@ -208,6 +209,34 @@ export default function SigninForm() {
                         <span className="px-2 bg-background text-muted-foreground font-medium">
                           Or continue with
                         </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-3">
+                      <Label className="text-xs text-muted-foreground">Select your role for Google signup/login:</Label>
+                      <div className="grid grid-cols-2 gap-2 bg-muted/50 p-1 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => setRole('user')}
+                          className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+                            role === 'user'
+                              ? 'bg-background text-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Candidate
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRole('employer')}
+                          className={`py-1.5 text-xs font-semibold rounded-md transition-all ${
+                            role === 'employer'
+                              ? 'bg-background text-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Employer
+                        </button>
                       </div>
                     </div>
 

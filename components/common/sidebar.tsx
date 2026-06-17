@@ -43,7 +43,7 @@ export function Sidebar() {
   const { isCollapsed, toggleCollapse } = useSidebar();
 
   // If user is not logged in, or we are on the landing/auth pages, do not render sidebar
-  if (!isLoggedIn || pathname === "/" || pathname.startsWith("/auth")) {
+  if (!isLoggedIn || pathname === "/" || pathname.startsWith("/auth") || user?.role === "candidate") {
     return null;
   }
 
@@ -52,59 +52,87 @@ export function Sidebar() {
     return null;
   }
 
-  const sections: SidebarSection[] = [
-    {
-      title: "Overview",
-      items: [
+  const sections: SidebarSection[] = user?.role === "employer"
+    ? [
         {
-          name: "Dashboard",
-          href: "/dashboard",
-          icon: LayoutDashboard,
+          title: "Recruitment",
+          items: [
+            {
+              name: "Recruitment Dashboard",
+              href: "/dashboard/recruitment",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Jobs Management",
+              href: "/dashboard/recruitment/jobs",
+              icon: FileText,
+            },
+          ],
         },
         {
-          name: "Mock Interview",
-          href: "/interview-setup",
-          icon: Sparkles,
-          badge: "New",
+          title: "Account",
+          items: [
+            {
+              name: "Settings & Security",
+              href: "/dashboard/settings",
+              icon: Settings,
+            },
+          ],
         },
-      ],
-    },
-    {
-      title: "Resume Hub",
-      items: [
+      ]
+    : [
         {
-          name: "Resume Builder",
-          href: "/resume/builder",
-          icon: Plus,
+          title: "Overview",
+          items: [
+            {
+              name: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Mock Interview",
+              href: "/interview-setup",
+              icon: Sparkles,
+              badge: "New",
+            },
+          ],
         },
         {
-          name: "ATS Analyzer",
-          href: "/resume/analyzer",
-          icon: FileText,
+          title: "Resume Hub",
+          items: [
+            {
+              name: "Resume Builder",
+              href: "/resume/builder",
+              icon: Plus,
+            },
+            {
+              name: "ATS Analyzer",
+              href: "/resume/analyzer",
+              icon: FileText,
+            },
+            {
+              name: "JD Matcher",
+              href: "/resume/jd-match",
+              icon: FileCheck,
+            },
+            {
+              name: "Resume Vault",
+              href: "/resume/vault",
+              icon: FolderHeart,
+            },
+          ],
         },
         {
-          name: "JD Matcher",
-          href: "/resume/jd-match",
-          icon: FileCheck,
+          title: "Account",
+          items: [
+            {
+              name: "Settings & Security",
+              href: "/dashboard/settings",
+              icon: Settings,
+            },
+          ],
         },
-        {
-          name: "Resume Vault",
-          href: "/resume/vault",
-          icon: FolderHeart,
-        },
-      ],
-    },
-    {
-      title: "Account",
-      items: [
-        {
-          name: "Settings & Security",
-          href: "/dashboard/settings",
-          icon: Settings,
-        },
-      ],
-    },
-  ];
+      ];
 
   return (
     <TooltipProvider>
