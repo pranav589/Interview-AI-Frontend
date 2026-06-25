@@ -38,6 +38,7 @@ export const useSignup = () => {
       name: string;
       email: string;
       password: string;
+      role?: string;
     }) => {
       return await api.post("auth/register", data);
     },

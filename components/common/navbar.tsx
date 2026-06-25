@@ -53,59 +53,156 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
-  const sections = [
-    {
-      title: "Overview",
-      items: [
+  const sections = user?.role === "admin"
+    ? [
         {
-          name: "Dashboard",
-          href: "/dashboard",
-          icon: LayoutDashboard,
+          title: "Overview",
+          items: [
+            {
+              name: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Mock Interview",
+              href: "/interview-setup",
+              icon: Sparkles,
+              badge: "New",
+            },
+          ],
         },
         {
-          name: "Mock Interview",
-          href: "/interview-setup",
-          icon: Sparkles,
-          badge: "New",
-        },
-      ],
-    },
-    {
-      title: "Resume Hub",
-      items: [
-        {
-          name: "Resume Builder",
-          href: "/resume/builder",
-          icon: Plus,
-        },
-        {
-          name: "ATS Analyzer",
-          href: "/resume/analyzer",
-          icon: FileText,
+          title: "Recruitment",
+          items: [
+            {
+              name: "Recruitment Dashboard",
+              href: "/dashboard/recruitment",
+              icon: ShieldCheck,
+            },
+            {
+              name: "Jobs Management",
+              href: "/dashboard/recruitment/jobs",
+              icon: FileText,
+            },
+          ],
         },
         {
-          name: "JD Matcher",
-          href: "/resume/jd-match",
-          icon: FileCheck,
+          title: "Resume Hub",
+          items: [
+            {
+              name: "Resume Builder",
+              href: "/resume/builder",
+              icon: Plus,
+            },
+            {
+              name: "ATS Analyzer",
+              href: "/resume/analyzer",
+              icon: FileText,
+            },
+            {
+              name: "JD Matcher",
+              href: "/resume/jd-match",
+              icon: FileCheck,
+            },
+            {
+              name: "Resume Vault",
+              href: "/resume/vault",
+              icon: FolderHeart,
+            },
+          ],
         },
         {
-          name: "Resume Vault",
-          href: "/resume/vault",
-          icon: FolderHeart,
+          title: "Account",
+          items: [
+            {
+              name: "Settings & Security",
+              href: "/dashboard/settings",
+              icon: Settings,
+            },
+          ],
         },
-      ],
-    },
-    {
-      title: "Account",
-      items: [
+      ]
+    : user?.role === "employer"
+    ? [
         {
-          name: "Settings & Security",
-          href: "/dashboard/settings",
-          icon: Settings,
+          title: "Recruitment",
+          items: [
+            {
+              name: "Recruitment Dashboard",
+              href: "/dashboard/recruitment",
+              icon: ShieldCheck,
+            },
+            {
+              name: "Jobs Management",
+              href: "/dashboard/recruitment/jobs",
+              icon: FileText,
+            },
+          ],
         },
-      ],
-    },
-  ];
+        {
+          title: "Account",
+          items: [
+            {
+              name: "Settings & Security",
+              href: "/dashboard/settings",
+              icon: Settings,
+            },
+          ],
+        },
+      ]
+    : [
+        {
+          title: "Overview",
+          items: [
+            {
+              name: "Dashboard",
+              href: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              name: "Mock Interview",
+              href: "/interview-setup",
+              icon: Sparkles,
+              badge: "New",
+            },
+          ],
+        },
+        {
+          title: "Resume Hub",
+          items: [
+            {
+              name: "Resume Builder",
+              href: "/resume/builder",
+              icon: Plus,
+            },
+            {
+              name: "ATS Analyzer",
+              href: "/resume/analyzer",
+              icon: FileText,
+            },
+            {
+              name: "JD Matcher",
+              href: "/resume/jd-match",
+              icon: FileCheck,
+            },
+            {
+              name: "Resume Vault",
+              href: "/resume/vault",
+              icon: FolderHeart,
+            },
+          ],
+        },
+        {
+          title: "Account",
+          items: [
+            {
+              name: "Settings & Security",
+              href: "/dashboard/settings",
+              icon: Settings,
+            },
+          ],
+        },
+      ];
 
   if (pathname === "/") {
     return null;
@@ -120,12 +217,14 @@ export function Navbar() {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  
+
   return (
     <nav className="sticky top-0 z-50 w-full h-[52px] border-b border-hairline bg-parchment/80 backdrop-blur-xl saturate-[180%] transition-all duration-300">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex justify-between items-center h-full">
           <Link
-            href={isLoggedIn ? "/dashboard" : "/"}
+            href={isLoggedIn ? (user?.role === "employer" ? "/dashboard/recruitment" : (user?.role === "candidate" ? "#" : "/dashboard")) : "/"}
             className="flex items-center gap-3"
           >
             <motion.div
@@ -176,7 +275,7 @@ export function Navbar() {
             {isLoggedIn ? (
               <>
                 <div className="hidden md:flex items-center gap-4">
-                  <NotificationBell />
+                  {user?.role !== "candidate" && <NotificationBell />}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -200,15 +299,28 @@ export function Navbar() {
                           {user?.email}
                         </p>
                       </div>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/dashboard/settings"
-                          className="flex items-center py-2 px-2 text-caption text-ink/80 focus:text-ink focus:bg-ink/5 rounded-md transition-colors"
-                        >
-                          <Settings className="mr-2 h-4 w-4" />
-                          <span>Settings & Security</span>
-                        </Link>
-                      </DropdownMenuItem>
+                      {user?.role !== "candidate" && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/profile"
+                              className="flex items-center py-2 px-2 text-caption text-ink/80 focus:text-ink focus:bg-ink/5 rounded-md transition-colors"
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              <span>My Profile</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/dashboard/settings"
+                              className="flex items-center py-2 px-2 text-caption text-ink/80 focus:text-ink focus:bg-ink/5 rounded-md transition-colors"
+                            >
+                              <Settings className="mr-2 h-4 w-4" />
+                              <span>Settings & Security</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuItem
                         onClick={handleLogout}
                         className="flex items-center py-2 px-2 text-caption text-destructive focus:bg-destructive/5 rounded-md transition-colors"
@@ -221,18 +333,20 @@ export function Navbar() {
                 </div>
 
                 <div className="md:hidden flex items-center gap-2">
-                  <NotificationBell />
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 text-ink/80 hover:bg-ink/5 hover:text-ink active:scale-95"
-                        aria-label="Open mobile navigation menu"
-                      >
-                        <Menu className="h-5 w-5" />
-                      </Button>
-                    </SheetTrigger>
+                  {user?.role !== "candidate" ? (
+                    <>
+                      <NotificationBell />
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 text-ink/80 hover:bg-ink/5 hover:text-ink active:scale-95"
+                            aria-label="Open mobile navigation menu"
+                          >
+                            <Menu className="h-5 w-5" />
+                          </Button>
+                        </SheetTrigger>
                     <SheetContent
                       side="right"
                       className="w-[280px] p-0 border-l border-hairline bg-parchment/95 backdrop-blur-xl flex flex-col h-full"
@@ -322,6 +436,17 @@ export function Navbar() {
                       </div>
                     </SheetContent>
                   </Sheet>
+                  </>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      onClick={handleLogout}
+                      className="text-caption text-destructive hover:bg-destructive/5 rounded-md h-[36px]"
+                    >
+                      <LogOut className="mr-2 h-4 w-4 animate-none" />
+                      Logout
+                    </Button>
+                  )}
                 </div>
               </>
             ) : (

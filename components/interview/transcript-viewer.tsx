@@ -4,12 +4,24 @@ import { TranscriptMessage } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Mic, MessageCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface TranscriptViewerProps {
   transcript: TranscriptMessage[];
 }
 
 export default function TranscriptViewer({ transcript }: TranscriptViewerProps) {
+  // Group consecutive candidate turns to ensure only one bubble is shown per turn
+  const mergedTranscript: TranscriptMessage[] = [];
+  for (const msg of transcript) {
+    const last = mergedTranscript[mergedTranscript.length - 1];
+    if (last && last.speaker === msg.speaker && msg.speaker === 'user') {
+      last.text = `${last.text} ${msg.text}`.trim();
+    } else {
+      mergedTranscript.push({ ...msg });
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -25,7 +37,7 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
           transition={{ duration: 0.5 }}
           className="space-y-6 max-h-[500px] overflow-y-auto"
         >
-          {transcript.map((message, index) => (
+          {mergedTranscript.map((message, index) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, x: message.speaker === 'ai' ? -20 : 20 }}
@@ -65,7 +77,9 @@ export default function TranscriptViewer({ transcript }: TranscriptViewerProps) 
                       : 'bg-secondary/10 text-foreground'
                     }`}
                 >
-                  <p className="text-sm leading-relaxed break-words">{message.text}</p>
+                  <div className="text-sm leading-relaxed break-words prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:list-disc prose-ol:list-decimal pl-2">
+                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                  </div>
                 </motion.div>
               </div>
             </motion.div>

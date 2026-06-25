@@ -12,8 +12,9 @@ interface RouteContainerProps {
 
 export function RouteContainer({ children }: RouteContainerProps) {
   const pathname = usePathname();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn} = useAuth();
   const { isCollapsed } = useSidebar();
+  
 
   const isLandingPage = pathname === "/";
 

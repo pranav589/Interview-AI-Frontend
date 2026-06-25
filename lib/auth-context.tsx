@@ -23,7 +23,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   login: (email: string, password: string, twoFactorCode?: string) => Promise<any>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role?: string) => Promise<void>;
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -83,8 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return await loginMutation.mutateAsync({ email, password, twoFactorCode });
   }, [loginMutation]);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
-    await signupMutation.mutateAsync({ name, email, password });
+  const signup = useCallback(async (name: string, email: string, password: string, role?: string) => {
+    await signupMutation.mutateAsync({ name, email, password, role });
   }, [signupMutation]);
 
   const logout = useCallback(async () => {

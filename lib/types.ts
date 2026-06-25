@@ -17,11 +17,14 @@ export interface User {
   avatar?: string;
   resume?: ResumeData;
   hasResume?: boolean;
-  role?: "user" | "admin";
+  role?: "user" | "admin" | "employer" | "candidate";
   twoFactorEnabled?: boolean;
   subscriptionTier?: SubscriptionTier;
   credits?: number;
   onboardingCompleted?: boolean;
+  companyName?: string;
+  companyWebsite?: string;
+  aiInterviewerName?: string;
 }
 
 export interface QuestionFeedback {
@@ -53,6 +56,7 @@ export interface Feedback {
 export interface Interview {
   _id: string;
   userId: string;
+  employerId?: string;
   interviewType: "behavioral" | "technical" | "system-design";
   difficultyLevel: "beginner" | "intermediate" | "advanced";
   numberOfQuestions: number;
