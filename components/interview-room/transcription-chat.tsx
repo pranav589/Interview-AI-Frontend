@@ -4,11 +4,13 @@ import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { MessageCircle, Mic } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export interface ChatMessage {
   id: string;
   speaker: 'user' | 'ai' | 'system';
   text: string;
+  isLive?: boolean;
 }
 
 interface TranscriptionChatProps {
@@ -24,11 +26,45 @@ export default function TranscriptionChat({
 }: TranscriptionChatProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Group consecutive candidate turns to ensure only one bubble is shown per turn
+  const mergedMessages: ChatMessage[] = [];
+  for (const msg of messages) {
+    const last = mergedMessages[mergedMessages.length - 1];
+    if (last && last.speaker === msg.speaker && msg.speaker === 'user') {
+      last.text = `${last.text} ${msg.text}`.trim();
+    } else {
+      mergedMessages.push({ ...msg });
+    }
+  }
+
+  // Append active partial transcript to the last user message, or create a virtual one
+  const displayMessages = [...mergedMessages];
+  if (partialTranscript || isTranscribing) {
+    const last = displayMessages[displayMessages.length - 1];
+    const liveText = partialTranscript || '...';
+    if (last && last.speaker === 'user') {
+      displayMessages[displayMessages.length - 1] = {
+        ...last,
+        text: last.text ? `${last.text} ${liveText}` : liveText,
+        isLive: true,
+      };
+    } else {
+      displayMessages.push({
+        id: `virtual-user`,
+        speaker: 'user',
+        text: liveText,
+        isLive: true,
+      });
+    }
+  }
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, partialTranscript]);
+  }, [displayMessages]);
+
+  const hasExchanges = displayMessages.filter(m => m.speaker !== 'system').length;
 
   return (
     <motion.div
@@ -47,7 +83,7 @@ export default function TranscriptionChat({
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{messages.filter(m => m.speaker !== 'system').length} exchanges</span>
+              <span className="text-xs font-medium text-muted-foreground">{hasExchanges} exchanges</span>
             </div>
           </div>
         </CardHeader>
@@ -58,7 +94,7 @@ export default function TranscriptionChat({
           aria-live="polite"
           aria-atomic="false"
         >
-          {messages.length === 0 && !partialTranscript ? (
+          {displayMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
               <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                 <Mic className="w-6 h-6" />
@@ -71,7 +107,7 @@ export default function TranscriptionChat({
               animate={{ opacity: 1 }}
               className="space-y-4 p-1 pb-4"
             >
-              {messages.map((message, index) => (
+              {displayMessages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.speaker === 'ai' ? 'justify-start' : message.speaker === 'user' ? 'justify-end' : 'justify-center'
@@ -95,16 +131,24 @@ export default function TranscriptionChat({
                       )}
 
                       <div className={`flex-1 min-w-0 ${message.speaker === 'user' ? 'text-right' : ''}`}>
-                        <div className={`text-[10px] uppercase tracking-wider font-bold mb-1 opacity-50 ${message.speaker === 'ai' ? 'text-ink-muted-80' : 'text-primary'}`}>
+                        <div className={`text-[10px] uppercase tracking-wider font-bold mb-1 opacity-50 ${message.speaker === 'ai' ? 'text-ink-muted-80' : 'text-primary'} flex items-center gap-1.5 ${message.speaker === 'user' ? 'justify-end' : 'justify-start'}`}>
                           {message.speaker === 'ai' ? 'Interviewer' : 'You'}
+                          {message.isLive && (
+                            <span className="flex h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
+                          )}
                         </div>
                         <motion.div
                           className={`text-body text-sm! p-4 rounded-2xl break-words ${message.speaker === 'ai'
                             ? 'bg-pearl border border-hairline text-ink rounded-tl-none'
                             : 'bg-primary text-white rounded-tr-none'
-                            }`}
+                            } ${message.isLive ? 'italic bg-primary/95' : ''}`}
                         >
-                          {message.text}
+                          <div className={`prose prose-sm max-w-none ${message.speaker === 'ai'
+                            ? 'text-ink dark:prose-invert prose-p:my-1 prose-headings:my-2 prose-ul:list-disc prose-ol:list-decimal pl-2'
+                            : 'text-white prose-p:my-1 prose-headings:my-2 prose-headings:text-white prose-p:text-white prose-strong:text-white prose-ul:list-disc prose-ol:list-decimal pl-2'
+                          }`}>
+                            <ReactMarkdown>{message.text}</ReactMarkdown>
+                          </div>
                         </motion.div>
                       </div>
 
@@ -122,21 +166,6 @@ export default function TranscriptionChat({
                   )}
                 </div>
               ))}
-
-              {/* Partial transcript being spoken */}
-              {(partialTranscript || isTranscribing) && (
-                <div className="flex justify-end animate-in fade-in slide-in-from-bottom-1 duration-300">
-                  <div className="max-w-[85%] p-3 rounded-2xl shadow-sm bg-primary/10 text-primary rounded-tr-none border border-primary/20 italic">
-                    <div className="text-[10px] uppercase tracking-wider font-bold mb-1 opacity-50 flex items-center gap-1.5 justify-end">
-                      <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
-                      Listening...
-                    </div>
-                    <div className="text-sm leading-relaxed text-right">
-                      {partialTranscript || "..."}
-                    </div>
-                  </div>
-                </div>
-              )}
             </motion.div>
           )}
         </CardContent>
