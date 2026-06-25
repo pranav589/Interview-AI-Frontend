@@ -105,8 +105,8 @@ export default function RecruitmentDashboard() {
       const formData = new FormData();
       formData.append("candidateName", candidateName);
       formData.append("candidateEmail", candidateEmail);
-      formData.append("scheduledStart", scheduledStart);
-      formData.append("scheduledEnd", scheduledEnd);
+      formData.append("scheduledStart", new Date(scheduledStart).toISOString());
+      formData.append("scheduledEnd", new Date(scheduledEnd).toISOString());
       formData.append("jobId", selectedJobId);
       formData.append("resumeFile", resumeFile);
 
